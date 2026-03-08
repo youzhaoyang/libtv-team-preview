@@ -715,52 +715,12 @@ function CanvasPage() {
           const isSelected = selectedNode === node.id;
           const userColor = isEditing ? isEditing.color : null;
           const isGen = generatingNode === node.id;
-          const NODE_W = node.preview ? 280 : 140;
-          const NODE_H = node.preview ? 200 : 90;
+          const NODE_W = 160;
 
           return (
             <div key={node.id} style={{ position: "absolute", left: node.x, top: node.y, zIndex: isSelected ? 30 : 10 }}>
 
-              {/* ── 浮动工具栏（选中节点上方） ── */}
-              {isSelected && node.tools && (
-                <div className="fade-in" style={{
-                  position: "absolute", bottom: "100%", left: "50%", transform: "translateX(-50%)",
-                  marginBottom: 10, whiteSpace: "nowrap", zIndex: 40,
-                  display: "flex", alignItems: "center", gap: 2, padding: 2,
-                  borderRadius: 12, border: "0.5px solid rgba(255,255,255,0.08)",
-                  background: "rgba(31,31,31,0.9)", backdropFilter: "blur(16px)",
-                  boxShadow: "0 4px 10px 0 rgba(0,0,0,0.12), 0 2px 4px 0 rgba(0,0,0,0.2)",
-                }}>
-                  {node.tools.map((tool) => (
-                    <button key={tool} style={{
-                      height: 32, padding: "0 10px", borderRadius: 8, border: "none",
-                      background: "transparent", color: "rgba(255,255,255,0.85)",
-                      fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
-                      transition: "all 0.15s",
-                    }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
-                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                    >
-                      <span style={{ fontSize: 13, opacity: 0.7 }}>
-                        {{"高清":"🔳","扩图":"↔️","多角度":"🔄","打光":"☀️","重绘":"✏️","擦除":"🧹","抠图":"✂️","补帧":"🎞","延长":"⏩"}[tool] || "⚙️"}
-                      </span>
-                      {tool}
-                    </button>
-                  ))}
-                  <div style={{ width: 1, height: 24, background: "rgba(255,255,255,0.1)", margin: "0 4px" }} />
-                  {["⊞","🖌","⬜","⬇","⛶"].map((icon, i) => (
-                    <button key={i} style={{
-                      width: 32, height: 32, borderRadius: 8, border: "none",
-                      background: "transparent", color: "rgba(255,255,255,0.7)",
-                      fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                      transition: "background 0.15s",
-                    }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
-                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                    >{icon}</button>
-                  ))}
-                </div>
-              )}
+              {/* 浮动工具栏已合并到下方生成器卡片内 */}
 
               {/* ── 协作编辑标识 ── */}
               {isEditing && (
@@ -782,67 +742,34 @@ function CanvasPage() {
                 </div>
               )}
 
-              {/* ── 节点卡片（选中节点） ── */}
+              {/* ── 节点卡片（始终紧凑） ── */}
               <div onClick={(e) => { e.stopPropagation(); setSelectedNode(isSelected ? null : node.id); }}
                 style={{
                   width: NODE_W, cursor: "pointer", transition: "box-shadow 0.2s",
-                  borderRadius: 12, overflow: "hidden",
+                  borderRadius: 12, overflow: "hidden", position: "relative",
                   background: "#171717",
                   border: isEditing ? `2px solid ${userColor.border}` : isSelected ? "2px solid #a8a8a8" : "1px solid #363636",
                   boxShadow: isEditing ? `0 0 16px ${userColor.bg}` : isGen ? "0 0 20px rgba(59,130,246,0.3)" : "0 4px 12px rgba(0,0,0,0.3)",
                 }}
               >
-                {/* 图片预览 */}
-                {node.preview && (
-                  <div style={{ position: "relative" }}>
-                    {node.previewLabel && (
-                      <p style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", padding: "6px 10px 2px", display: "flex", alignItems: "center", gap: 4 }}>
-                        🖼 {node.previewLabel}
-                      </p>
-                    )}
-                    <div style={{ position: "relative", margin: "0 6px 6px" }}>
-                      <img src={node.preview} alt="" style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: 8, display: "block" }} />
-                      {isSelected && (
-                        <>
-                          <button style={{
-                            position: "absolute", left: -10, top: "50%", transform: "translateY(-50%)",
-                            width: 20, height: 20, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.3)",
-                            background: "rgba(0,0,0,0.5)", color: "rgba(255,255,255,0.6)", cursor: "pointer",
-                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11,
-                          }}>⊕</button>
-                          <button style={{
-                            position: "absolute", right: -10, top: "50%", transform: "translateY(-50%)",
-                            width: 20, height: 20, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.3)",
-                            background: "rgba(0,0,0,0.5)", color: "rgba(255,255,255,0.6)", cursor: "pointer",
-                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11,
-                          }}>⊕</button>
-                        </>
-                      )}
-                    </div>
+                <div style={{ padding: "10px 12px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{
+                      fontSize: 10, padding: "2px 6px", borderRadius: 4,
+                      background: node.type === "input" ? "rgba(16,185,129,0.15)" : node.type === "output" ? "rgba(139,92,246,0.15)" : "rgba(59,130,246,0.15)",
+                      color: node.type === "input" ? "#10B981" : node.type === "output" ? "#8B5CF6" : "#3B82F6",
+                    }}>
+                      {node.type === "input" ? "输入" : node.type === "output" ? "输出" : "处理"}
+                    </span>
+                    {isGen && <span style={{ fontSize: 9, color: "#3B82F6", animation: "pulse 1.5s infinite" }}>生成中...</span>}
                   </div>
-                )}
-                {/* 无预览的简单节点 */}
-                {!node.preview && (
-                  <div style={{ padding: "10px 12px" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                      <span style={{
-                        fontSize: 11, padding: "2px 6px", borderRadius: 4,
-                        background: node.type === "output" ? "rgba(139,92,246,0.15)" : "rgba(59,130,246,0.15)",
-                        color: node.type === "output" ? "#8B5CF6" : "#3B82F6",
-                      }}>
-                        {node.type === "output" ? "输出" : "处理"}
-                      </span>
-                      {isGen && <span style={{ fontSize: 10, color: "#3B82F6", animation: "pulse 1.5s infinite" }}>生成中...</span>}
-                    </div>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: "#fff", marginBottom: 4 }}>{node.label}</p>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
-                      {(node.params || []).slice(0, 2).map((p) => (
-                        <div key={p.key}>{p.label}: {p.value || (p.active ? "开" : "关")}</div>
-                      ))}
-                    </div>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: "#fff", marginBottom: 4 }}>{node.label}</p>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>
+                    {(node.params || []).slice(0, 2).map((p) => (
+                      <div key={p.key}>{p.label}: {p.value || (p.active ? "开" : "关")}</div>
+                    ))}
                   </div>
-                )}
-                {/* 生成中动画条 */}
+                </div>
                 {isGen && (
                   <div style={{
                     position: "absolute", inset: -2, borderRadius: 14, overflow: "hidden",
@@ -853,56 +780,68 @@ function CanvasPage() {
                 )}
               </div>
 
-              {/* ── 生成器卡片（选中节点下方） ── */}
+              {/* ── 生成器卡片（选中节点正下方） ── */}
               {isSelected && (
                 <div className="fade-in" style={{
                   position: "absolute", top: "100%", left: "50%",
-                  transform: "translateX(-50%)", marginTop: 16, zIndex: 40,
-                  width: node.preview ? 420 : 340,
-                  borderRadius: 12, overflow: "hidden",
+                  transform: "translateX(-50%)", marginTop: 12, zIndex: 40,
+                  width: 320, borderRadius: 14, overflow: "hidden",
                   border: "0.5px solid rgba(255,255,255,0.08)",
-                  background: "#262626",
-                  boxShadow: "0px 4px 10px 0px rgba(0,0,0,0.12)",
+                  background: "#1f1f1f",
+                  boxShadow: "0px 8px 24px rgba(0,0,0,0.4)",
                 }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "12px 10px 10px" }}>
-                    {/* 快捷操作 + 参考图缩略 */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      {(node.quickActions || [{ icon: "🎨", label: "风格" }, { icon: "📍", label: "标记" }]).map((action) => (
-                        <button key={action.label} style={{
-                          height: 48, width: 52, borderRadius: 10,
-                          border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)",
-                          color: "rgba(255,255,255,0.7)", cursor: "pointer",
-                          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, fontSize: 11,
-                          transition: "all 0.15s",
+                  {/* ── 工具 Tab 栏 ── */}
+                  {node.tools && node.tools.length > 0 && (
+                    <div style={{
+                      display: "flex", gap: 0, borderBottom: "1px solid rgba(255,255,255,0.06)",
+                    }}>
+                      {node.tools.map((tool, idx) => (
+                        <button key={tool} style={{
+                          flex: 1, height: 36, border: "none",
+                          background: idx === 0 ? "rgba(255,255,255,0.06)" : "transparent",
+                          color: idx === 0 ? "#fff" : "rgba(255,255,255,0.45)",
+                          fontSize: 13, fontWeight: idx === 0 ? 500 : 400,
+                          cursor: "pointer", transition: "all 0.15s",
+                          borderBottom: idx === 0 ? "2px solid #fff" : "2px solid transparent",
                         }}
-                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
-                        >
-                          <span style={{ fontSize: 16 }}>{action.icon}</span>
-                          <span>{action.label}</span>
-                        </button>
+                          onMouseEnter={(e) => { if (idx !== 0) e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
+                          onMouseLeave={(e) => { if (idx !== 0) e.currentTarget.style.color = "rgba(255,255,255,0.45)"; }}
+                        >{tool}</button>
                       ))}
-                      {node.preview && (
-                        <div style={{
-                          height: 48, width: 52, borderRadius: 10, overflow: "hidden",
-                          border: "1px solid rgba(255,255,255,0.1)", position: "relative", flexShrink: 0,
-                        }}>
-                          <img src={node.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          <div style={{
-                            position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: 4,
-                            background: "#3B82F6", color: "#fff", fontSize: 9, fontWeight: 700,
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                          }}>1</div>
-                        </div>
-                      )}
                     </div>
+                  )}
 
-                    {/* 提示词 */}
-                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.5, minHeight: 36 }}>
+                  <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: 10 }}>
+                    {/* ── 参考图预览区 ── */}
+                    {node.preview && (
+                      <div>
+                        <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 6, display: "flex", alignItems: "center", gap: 4 }}>
+                          📖 {node.previewLabel || "参考图预览"}
+                        </p>
+                        <div style={{ position: "relative", borderRadius: 10, overflow: "hidden" }}>
+                          <img src={node.preview} alt="" style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }} />
+                          <button style={{
+                            position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)",
+                            width: 24, height: 24, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.2)",
+                            background: "rgba(0,0,0,0.5)", color: "#fff", cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12,
+                          }}>‹</button>
+                          <button style={{
+                            position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)",
+                            width: 24, height: 24, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.2)",
+                            background: "rgba(0,0,0,0.5)", color: "#fff", cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12,
+                          }}>›</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── 描述文案 ── */}
+                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>
                       {node.hint || "输入提示词..."}
                     </p>
 
-                    {/* 底部控制栏 */}
+                    {/* ── 参数控制栏 ── */}
                     <div style={{
                       display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6,
                       borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 8,
@@ -910,53 +849,45 @@ function CanvasPage() {
                       {(node.params || []).map((param) => (
                         param.type === "toggle" ? (
                           <button key={param.key} style={{
-                            height: 28, padding: "0 8px", borderRadius: 6,
+                            height: 26, padding: "0 8px", borderRadius: 6,
                             border: param.active ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.06)",
                             background: param.active ? "rgba(255,255,255,0.06)" : "transparent",
                             color: param.active ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.35)",
-                            fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+                            fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", gap: 3,
                           }}>
-                            {param.label === "摄像机控制" && "📹"}{param.label === "合并音频" && "🔗"} {param.label}
+                            {param.label}
                           </button>
                         ) : (
                           <button key={param.key} style={{
-                            height: 28, padding: "0 8px", borderRadius: 6,
+                            height: 26, padding: "0 8px", borderRadius: 6,
                             border: "none", background: "rgba(255,255,255,0.04)",
-                            color: "rgba(255,255,255,0.6)", fontSize: 12, cursor: "pointer",
+                            color: "rgba(255,255,255,0.6)", fontSize: 11, cursor: "pointer",
                             display: "flex", alignItems: "center", gap: 3, transition: "background 0.15s",
                           }}
                             onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
                             onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
                           >
-                            {param.label === "模型" && <span style={{ opacity: 0.5 }}>👁</span>}
+                            {param.label === "模型" && <span style={{ opacity: 0.5, fontSize: 10 }}>◇</span>}
                             {param.value || param.label}
-                            {param.type === "select" && <span style={{ opacity: 0.4, fontSize: 10 }}>▾</span>}
+                            {param.type === "select" && <span style={{ opacity: 0.4, fontSize: 9 }}>▾</span>}
                           </button>
                         )
                       ))}
 
-                      {/* 分隔 + 附加图标 */}
-                      {node.type === "input" && (
-                        <>
-                          <span style={{ fontSize: 14, opacity: 0.35, cursor: "pointer" }}>🅰️</span>
-                          <span style={{ fontSize: 14, opacity: 0.35, cursor: "pointer" }}>🔗</span>
-                        </>
-                      )}
-
                       {/* 生成按钮 */}
                       {node.cost > 0 && (
                         <button onClick={(e) => { e.stopPropagation(); handleGenerate(node.id); }} style={{
-                          height: 28, padding: "0 12px", borderRadius: 8, border: "none", cursor: "pointer",
+                          height: 26, padding: "0 12px", borderRadius: 6, border: "none", cursor: "pointer",
                           marginLeft: "auto",
-                          background: isGen ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.1)",
+                          background: isGen ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg, #0ea5e9, #06b6d4)",
                           color: isGen ? "rgba(255,255,255,0.4)" : "#fff",
-                          fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4,
-                          transition: "background 0.15s",
+                          fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 4,
+                          transition: "all 0.15s",
                         }}
-                          onMouseEnter={(e) => { if (!isGen) e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
-                          onMouseLeave={(e) => { if (!isGen) e.currentTarget.style.background = isGen ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.1)"; }}
+                          onMouseEnter={(e) => { if (!isGen) e.currentTarget.style.opacity = "0.85"; }}
+                          onMouseLeave={(e) => { if (!isGen) e.currentTarget.style.opacity = "1"; }}
                         >
-                          {isGen ? "⏳ 生成中..." : (<>⚡ <span style={{ fontWeight: 600 }}>{node.cost}</span></>)}
+                          {isGen ? "⏳ 生成中..." : (<>+ <span>{node.cost}</span></>)}
                         </button>
                       )}
                     </div>
