@@ -708,256 +708,265 @@ function CanvasPage() {
           })}
         </svg>
 
-        {/* 节点 */}
+        {/* 节点 + 选中工具栏 + 生成器 */}
         {nodes.map((node) => {
           const isEditing = editingUser[node.id];
           const isGenerating = generatingNode === node.id;
           const isSelected = selectedNode === node.id;
           const userColor = isEditing ? isEditing.color : null;
+          const isGen = generatingNode === node.id;
+          const NODE_W = node.preview ? 280 : 140;
+          const NODE_H = node.preview ? 200 : 90;
 
           return (
-            <div key={node.id} onClick={() => setSelectedNode(node.id)}
-              style={{
-                position: "absolute", left: node.x, top: node.y, width: 140, minHeight: 60,
-                borderRadius: 12, cursor: "pointer", transition: "box-shadow 0.2s",
-                background: "#191e26",
-                border: isEditing ? `2px solid ${userColor.border}` : isSelected ? "2px solid #a8a8a8" : "1px solid #363636",
-                boxShadow: isEditing ? `0 0 16px ${userColor.bg}` : isGenerating ? "0 0 20px rgba(59,130,246,0.3)" : "0 4px 12px rgba(0,0,0,0.3)",
-              }}
-            >
-              {/* 编辑者头像标识 */}
+            <div key={node.id} style={{ position: "absolute", left: node.x, top: node.y, zIndex: isSelected ? 30 : 10 }}>
+
+              {/* ── 浮动工具栏（选中节点上方） ── */}
+              {isSelected && node.tools && (
+                <div className="fade-in" style={{
+                  position: "absolute", bottom: "100%", left: "50%", transform: "translateX(-50%)",
+                  marginBottom: 10, whiteSpace: "nowrap", zIndex: 40,
+                  display: "flex", alignItems: "center", gap: 2, padding: 2,
+                  borderRadius: 12, border: "0.5px solid rgba(255,255,255,0.08)",
+                  background: "rgba(31,31,31,0.9)", backdropFilter: "blur(16px)",
+                  boxShadow: "0 4px 10px 0 rgba(0,0,0,0.12), 0 2px 4px 0 rgba(0,0,0,0.2)",
+                }}>
+                  {node.tools.map((tool) => (
+                    <button key={tool} style={{
+                      height: 32, padding: "0 10px", borderRadius: 8, border: "none",
+                      background: "transparent", color: "rgba(255,255,255,0.85)",
+                      fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+                      transition: "all 0.15s",
+                    }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                    >
+                      <span style={{ fontSize: 13, opacity: 0.7 }}>
+                        {{"高清":"🔳","扩图":"↔️","多角度":"🔄","打光":"☀️","重绘":"✏️","擦除":"🧹","抠图":"✂️","补帧":"🎞","延长":"⏩"}[tool] || "⚙️"}
+                      </span>
+                      {tool}
+                    </button>
+                  ))}
+                  <div style={{ width: 1, height: 24, background: "rgba(255,255,255,0.1)", margin: "0 4px" }} />
+                  {["⊞","🖌","⬜","⬇","⛶"].map((icon, i) => (
+                    <button key={i} style={{
+                      width: 32, height: 32, borderRadius: 8, border: "none",
+                      background: "transparent", color: "rgba(255,255,255,0.7)",
+                      fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "background 0.15s",
+                    }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                    >{icon}</button>
+                  ))}
+                </div>
+              )}
+
+              {/* ── 协作编辑标识 ── */}
               {isEditing && (
                 <div className="fade-in" style={{
-                  position: "absolute", top: -14, left: -14,
+                  position: "absolute", top: -14, left: -14, zIndex: 15,
                   width: 28, height: 28, borderRadius: "50%", background: userColor.border,
                   display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13,
-                  border: "2px solid #191e26", animation: "ripple 2s infinite",
-                  zIndex: 10,
+                  border: "2px solid #171717", animation: "ripple 2s infinite",
                 }}>
                   {isEditing.avatar}
                 </div>
               )}
-
-              {/* 编辑者名称标签 */}
               {isEditing && (
                 <div className="fade-in" style={{
-                  position: "absolute", top: -24, left: 18, fontSize: 11,
+                  position: "absolute", top: -24, left: 18, fontSize: 11, zIndex: 15,
                   color: userColor.border, fontWeight: 500, whiteSpace: "nowrap",
                 }}>
                   {isEditing.name} 编辑中
                 </div>
               )}
 
-              {/* 生成中动画 */}
-              {isGenerating && (
-                <div style={{
-                  position: "absolute", inset: -2, borderRadius: 14, overflow: "hidden",
-                  border: "2px solid transparent",
-                  background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.5), transparent) border-box",
-                  backgroundSize: "200% 100%",
-                  animation: "generating 1.5s linear infinite",
-                  pointerEvents: "none",
-                }} />
+              {/* ── 节点卡片（选中节点） ── */}
+              <div onClick={(e) => { e.stopPropagation(); setSelectedNode(isSelected ? null : node.id); }}
+                style={{
+                  width: NODE_W, cursor: "pointer", transition: "box-shadow 0.2s",
+                  borderRadius: 12, overflow: "hidden",
+                  background: "#171717",
+                  border: isEditing ? `2px solid ${userColor.border}` : isSelected ? "2px solid #a8a8a8" : "1px solid #363636",
+                  boxShadow: isEditing ? `0 0 16px ${userColor.bg}` : isGen ? "0 0 20px rgba(59,130,246,0.3)" : "0 4px 12px rgba(0,0,0,0.3)",
+                }}
+              >
+                {/* 图片预览 */}
+                {node.preview && (
+                  <div style={{ position: "relative" }}>
+                    {node.previewLabel && (
+                      <p style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", padding: "6px 10px 2px", display: "flex", alignItems: "center", gap: 4 }}>
+                        🖼 {node.previewLabel}
+                      </p>
+                    )}
+                    <div style={{ position: "relative", margin: "0 6px 6px" }}>
+                      <img src={node.preview} alt="" style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: 8, display: "block" }} />
+                      {isSelected && (
+                        <>
+                          <button style={{
+                            position: "absolute", left: -10, top: "50%", transform: "translateY(-50%)",
+                            width: 20, height: 20, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.3)",
+                            background: "rgba(0,0,0,0.5)", color: "rgba(255,255,255,0.6)", cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11,
+                          }}>⊕</button>
+                          <button style={{
+                            position: "absolute", right: -10, top: "50%", transform: "translateY(-50%)",
+                            width: 20, height: 20, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.3)",
+                            background: "rgba(0,0,0,0.5)", color: "rgba(255,255,255,0.6)", cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11,
+                          }}>⊕</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {/* 无预览的简单节点 */}
+                {!node.preview && (
+                  <div style={{ padding: "10px 12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{
+                        fontSize: 11, padding: "2px 6px", borderRadius: 4,
+                        background: node.type === "output" ? "rgba(139,92,246,0.15)" : "rgba(59,130,246,0.15)",
+                        color: node.type === "output" ? "#8B5CF6" : "#3B82F6",
+                      }}>
+                        {node.type === "output" ? "输出" : "处理"}
+                      </span>
+                      {isGen && <span style={{ fontSize: 10, color: "#3B82F6", animation: "pulse 1.5s infinite" }}>生成中...</span>}
+                    </div>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: "#fff", marginBottom: 4 }}>{node.label}</p>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
+                      {(node.params || []).slice(0, 2).map((p) => (
+                        <div key={p.key}>{p.label}: {p.value || (p.active ? "开" : "关")}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* 生成中动画条 */}
+                {isGen && (
+                  <div style={{
+                    position: "absolute", inset: -2, borderRadius: 14, overflow: "hidden",
+                    border: "2px solid transparent", pointerEvents: "none",
+                    background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.5), transparent) border-box",
+                    backgroundSize: "200% 100%", animation: "generating 1.5s linear infinite",
+                  }} />
+                )}
+              </div>
+
+              {/* ── 生成器卡片（选中节点下方） ── */}
+              {isSelected && (
+                <div className="fade-in" style={{
+                  position: "absolute", top: "100%", left: "50%",
+                  transform: "translateX(-50%)", marginTop: 16, zIndex: 40,
+                  width: node.preview ? 420 : 340,
+                  borderRadius: 12, overflow: "hidden",
+                  border: "0.5px solid rgba(255,255,255,0.08)",
+                  background: "#262626",
+                  boxShadow: "0px 4px 10px 0px rgba(0,0,0,0.12)",
+                }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "12px 10px 10px" }}>
+                    {/* 快捷操作 + 参考图缩略 */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      {(node.quickActions || [{ icon: "🎨", label: "风格" }, { icon: "📍", label: "标记" }]).map((action) => (
+                        <button key={action.label} style={{
+                          height: 48, width: 52, borderRadius: 10,
+                          border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)",
+                          color: "rgba(255,255,255,0.7)", cursor: "pointer",
+                          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, fontSize: 11,
+                          transition: "all 0.15s",
+                        }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
+                        >
+                          <span style={{ fontSize: 16 }}>{action.icon}</span>
+                          <span>{action.label}</span>
+                        </button>
+                      ))}
+                      {node.preview && (
+                        <div style={{
+                          height: 48, width: 52, borderRadius: 10, overflow: "hidden",
+                          border: "1px solid rgba(255,255,255,0.1)", position: "relative", flexShrink: 0,
+                        }}>
+                          <img src={node.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <div style={{
+                            position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: 4,
+                            background: "#3B82F6", color: "#fff", fontSize: 9, fontWeight: 700,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>1</div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 提示词 */}
+                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.5, minHeight: 36 }}>
+                      {node.hint || "输入提示词..."}
+                    </p>
+
+                    {/* 底部控制栏 */}
+                    <div style={{
+                      display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6,
+                      borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 8,
+                    }}>
+                      {(node.params || []).map((param) => (
+                        param.type === "toggle" ? (
+                          <button key={param.key} style={{
+                            height: 28, padding: "0 8px", borderRadius: 6,
+                            border: param.active ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.06)",
+                            background: param.active ? "rgba(255,255,255,0.06)" : "transparent",
+                            color: param.active ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.35)",
+                            fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+                          }}>
+                            {param.label === "摄像机控制" && "📹"}{param.label === "合并音频" && "🔗"} {param.label}
+                          </button>
+                        ) : (
+                          <button key={param.key} style={{
+                            height: 28, padding: "0 8px", borderRadius: 6,
+                            border: "none", background: "rgba(255,255,255,0.04)",
+                            color: "rgba(255,255,255,0.6)", fontSize: 12, cursor: "pointer",
+                            display: "flex", alignItems: "center", gap: 3, transition: "background 0.15s",
+                          }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
+                            onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                          >
+                            {param.label === "模型" && <span style={{ opacity: 0.5 }}>👁</span>}
+                            {param.value || param.label}
+                            {param.type === "select" && <span style={{ opacity: 0.4, fontSize: 10 }}>▾</span>}
+                          </button>
+                        )
+                      ))}
+
+                      {/* 分隔 + 附加图标 */}
+                      {node.type === "input" && (
+                        <>
+                          <span style={{ fontSize: 14, opacity: 0.35, cursor: "pointer" }}>🅰️</span>
+                          <span style={{ fontSize: 14, opacity: 0.35, cursor: "pointer" }}>🔗</span>
+                        </>
+                      )}
+
+                      {/* 生成按钮 */}
+                      {node.cost > 0 && (
+                        <button onClick={(e) => { e.stopPropagation(); handleGenerate(node.id); }} style={{
+                          height: 28, padding: "0 12px", borderRadius: 8, border: "none", cursor: "pointer",
+                          marginLeft: "auto",
+                          background: isGen ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.1)",
+                          color: isGen ? "rgba(255,255,255,0.4)" : "#fff",
+                          fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4,
+                          transition: "background 0.15s",
+                        }}
+                          onMouseEnter={(e) => { if (!isGen) e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
+                          onMouseLeave={(e) => { if (!isGen) e.currentTarget.style.background = isGen ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.1)"; }}
+                        >
+                          {isGen ? "⏳ 生成中..." : (<>⚡ <span style={{ fontWeight: 600 }}>{node.cost}</span></>)}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
 
-              <div style={{ padding: "10px 12px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{
-                    fontSize: 11, padding: "2px 6px", borderRadius: 4,
-                    background: node.type === "input" ? "rgba(16,185,129,0.15)" : node.type === "output" ? "rgba(139,92,246,0.15)" : "rgba(59,130,246,0.15)",
-                    color: node.type === "input" ? "#10B981" : node.type === "output" ? "#8B5CF6" : "#3B82F6",
-                  }}>
-                    {node.type === "input" ? "输入" : node.type === "output" ? "输出" : "处理"}
-                  </span>
-                  {isGenerating && <span style={{ fontSize: 10, color: "#3B82F6", animation: "pulse 1.5s infinite" }}>生成中...</span>}
-                </div>
-                <p style={{ fontSize: 13, fontWeight: 500, color: "#fff", marginBottom: 4 }}>{node.label}</p>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
-                  {(node.params || []).slice(0, 2).map((p) => (
-                    <div key={p.key}>{p.label}: {p.value || (p.active ? "开" : "关")}</div>
-                  ))}
-                </div>
-              </div>
             </div>
           );
         })}
-
-        {/* 右侧面板 */}
-        {selectedNode && (() => {
-          const node = nodes.find((n) => n.id === selectedNode);
-          if (!node) return null;
-          const isGen = generatingNode === selectedNode;
-          const editor = editingUser[selectedNode];
-          return (
-          <div className="slide-up" style={{
-            position: "absolute", right: 16, top: 16, width: 320, maxHeight: "calc(100vh - 84px)", overflowY: "auto",
-            background: "rgba(25,30,38,0.96)", backdropFilter: "blur(20px)",
-            border: "1px solid #363636", borderRadius: 16,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-          }}>
-            {/* 协作提示 */}
-            {editor && (
-              <div style={{
-                padding: "8px 12px", margin: "12px 12px 0",
-                borderRadius: 8, background: editor.color.bg,
-                border: `1px solid ${editor.color.border}30`,
-                display: "flex", alignItems: "center", gap: 8, fontSize: 12,
-              }}>
-                <span>{editor.avatar}</span>
-                <span style={{ color: editor.color.border, fontWeight: 500 }}>
-                  {editor.name} 正在编辑此节点
-                </span>
-              </div>
-            )}
-
-            {/* 工具栏 */}
-            {node.tools && (
-              <div style={{
-                display: "flex", flexWrap: "wrap", gap: 2, padding: "12px 12px 8px",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
-              }}>
-                {node.tools.map((tool) => (
-                  <button key={tool} style={{
-                    height: 28, padding: "0 10px", borderRadius: 6, border: "none",
-                    background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)",
-                    fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
-                    transition: "all 0.15s",
-                  }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "#fff"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
-                  >
-                    {tool}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* 图像预览 */}
-            {node.preview && (
-              <div style={{ padding: "10px 12px" }}>
-                {node.previewLabel && (
-                  <p style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 6, display: "flex", alignItems: "center", gap: 4 }}>
-                    🖼 {node.previewLabel}
-                  </p>
-                )}
-                <div style={{
-                  position: "relative", borderRadius: 10, overflow: "hidden",
-                  border: "1px solid rgba(255,255,255,0.08)", background: "#111",
-                }}>
-                  <img src={node.preview} alt="" style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }} />
-                  <div style={{
-                    position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
-                    display: "flex", gap: 0,
-                  }}>
-                    <button style={{
-                      position: "absolute", left: -130, top: "50%", transform: "translateY(-50%)",
-                      width: 22, height: 22, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.3)",
-                      background: "rgba(0,0,0,0.4)", color: "rgba(255,255,255,0.6)", cursor: "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12,
-                    }}>⊕</button>
-                    <button style={{
-                      position: "absolute", right: -130, top: "50%", transform: "translateY(-50%)",
-                      width: 22, height: 22, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.3)",
-                      background: "rgba(0,0,0,0.4)", color: "rgba(255,255,255,0.6)", cursor: "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12,
-                    }}>⊕</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 快捷操作 + 缩略图 */}
-            {node.quickActions && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 12px 8px" }}>
-                {node.quickActions.map((action) => (
-                  <button key={action.label} style={{
-                    height: 48, width: 52, borderRadius: 10,
-                    border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)",
-                    color: "rgba(255,255,255,0.7)", cursor: "pointer",
-                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
-                    fontSize: 11, transition: "all 0.15s",
-                  }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-                  >
-                    <span style={{ fontSize: 16 }}>{action.icon}</span>
-                    <span>{action.label}</span>
-                  </button>
-                ))}
-                {node.preview && (
-                  <div style={{
-                    height: 48, width: 52, borderRadius: 10, overflow: "hidden",
-                    border: "1px solid rgba(255,255,255,0.12)", position: "relative",
-                  }}>
-                    <img src={node.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    <div style={{
-                      position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: 4,
-                      background: "#3B82F6", color: "#fff", fontSize: 9, fontWeight: 700,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>1</div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 提示文案 */}
-            {node.hint && (
-              <div style={{ padding: "0 12px 10px" }}>
-                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>{node.hint}</p>
-              </div>
-            )}
-
-            {/* 参数栏 */}
-            <div style={{
-              display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6,
-              padding: "10px 12px", borderTop: "1px solid rgba(255,255,255,0.06)",
-            }}>
-              {(node.params || []).map((param) => (
-                param.type === "toggle" ? (
-                  <button key={param.key} style={{
-                    height: 30, padding: "0 10px", borderRadius: 8,
-                    border: param.active ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(255,255,255,0.08)",
-                    background: param.active ? "rgba(255,255,255,0.08)" : "transparent",
-                    color: param.active ? "#fff" : "rgba(255,255,255,0.4)",
-                    fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
-                    transition: "all 0.15s",
-                  }}>
-                    {param.label === "摄像机控制" ? "📹" : "🔗"} {param.label}
-                  </button>
-                ) : (
-                  <button key={param.key} style={{
-                    height: 30, padding: "0 10px", borderRadius: 8,
-                    border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)",
-                    color: "rgba(255,255,255,0.7)", fontSize: 12, cursor: "pointer",
-                    display: "flex", alignItems: "center", gap: 4, transition: "all 0.15s",
-                  }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
-                    onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
-                  >
-                    {param.label === "模型" && "👁"} {param.value || param.label} {param.type === "select" && "▾"}
-                  </button>
-                )
-              ))}
-
-              {/* 生成按钮 */}
-              {node.cost > 0 && (
-                <button onClick={() => handleGenerate(selectedNode)} style={{
-                  height: 30, padding: "0 12px", borderRadius: 8, border: "none", cursor: "pointer",
-                  marginLeft: "auto",
-                  background: isGen ? "#525252" : "#2563EB", color: "#fff",
-                  fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4,
-                  transition: "background 0.15s", opacity: isGen ? 0.6 : 1,
-                }}
-                  onMouseEnter={(e) => { if (!isGen) e.currentTarget.style.background = "#1D4ED8"; }}
-                  onMouseLeave={(e) => { if (!isGen) e.currentTarget.style.background = "#2563EB"; }}
-                >
-                  {isGen ? "⏳ 生成中..." : (<>⚡ {node.cost}</>)}
-                </button>
-              )}
-            </div>
-          </div>
-          );
-        })()}
 
         {/* 左下角 - 图例 */}
         <div style={{
