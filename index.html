@@ -386,6 +386,109 @@ function ProjectListPage() {
 }
 
 // ============================================================
+// 分享下拉面板
+// ============================================================
+const ShareDropdown = memo(function ShareDropdown({ showToast }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const sectionStyle = {
+    padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+    display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12,
+  };
+  const titleStyle = { fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 4, display: "flex", alignItems: "center", gap: 8 };
+  const descStyle = { fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 };
+  const btnBase = {
+    height: 30, padding: "0 14px", borderRadius: 8, border: "none", cursor: "pointer",
+    fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0,
+    transition: "background 0.15s, opacity 0.15s",
+  };
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button onClick={() => setOpen(!open)} style={{
+        width: 32, height: 32, borderRadius: 8, border: "none", cursor: "pointer",
+        background: open ? "rgba(255,255,255,0.12)" : "transparent",
+        color: open ? "#fff" : "rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center",
+        transition: "all 0.15s", fontSize: 15,
+      }}
+        onMouseEnter={(e) => { if (!open) { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#fff"; } }}
+        onMouseLeave={(e) => { if (!open) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; } }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div className="fade-in" style={{
+          position: "absolute", top: "calc(100% + 8px)", right: 0, width: 340,
+          background: "rgba(28,28,28,0.96)", backdropFilter: "blur(20px)",
+          border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16,
+          boxShadow: "0 12px 48px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3)",
+          overflow: "hidden", zIndex: 200,
+        }}>
+          {/* 在 TapTV 上发布 */}
+          <div style={sectionStyle}>
+            <div style={{ flex: 1 }}>
+              <div style={titleStyle}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                在 TapTV 上发布
+              </div>
+              <p style={descStyle}>在 TapTV 上发布你的作品，让更多创作者看到。</p>
+            </div>
+            <button style={{ ...btnBase, background: "#fff", color: "#000" }}
+              onClick={() => { setOpen(false); showToast("已发布到 TapTV", "success"); }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = "0.85"}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+            >发布</button>
+          </div>
+
+          {/* 通过链接分享 */}
+          <div style={sectionStyle}>
+            <div style={{ flex: 1 }}>
+              <div style={titleStyle}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                通过链接分享
+              </div>
+              <p style={descStyle}>任何拥有此链接的人都可以查看并克隆你的画布。</p>
+            </div>
+            <button style={{ ...btnBase, background: "rgba(255,255,255,0.1)", color: "#fff" }}
+              onClick={() => { setOpen(false); showToast("链接已复制到剪贴板", "success"); }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+            >分享</button>
+          </div>
+
+          {/* 团队项目 */}
+          <div style={{ ...sectionStyle, borderBottom: "none" }}>
+            <div style={{ flex: 1 }}>
+              <div style={titleStyle}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                团队项目
+              </div>
+              <p style={descStyle}>此项目已与 {TEAM_NAME} 共享。所有团队成员都可以编辑其内容。</p>
+            </div>
+            <button style={{ ...btnBase, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}
+              onClick={() => { setOpen(false); showToast("已移回个人空间", "info"); }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+            >移回个人</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+// ============================================================
 // 页面二：画布协作（US-04）
 // ============================================================
 const NODES_INITIAL = [
@@ -467,9 +570,10 @@ function CanvasPage() {
           <span style={{ fontSize: 14, fontWeight: 500, color: "#fff" }}>团队项目 1</span>
         </div>
 
-        {/* 在线成员 */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginRight: 4 }}>在线：</span>
+        {/* 右侧：在线成员 + 分享 + 会员 + 头像 */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* 在线成员 */}
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>在线：</span>
           <div style={{ display: "flex", alignItems: "center" }}>
             {onlineUsers.slice(0, 5).map((user, i) => (
               <div key={user.id} title={user.name} style={{
@@ -491,6 +595,48 @@ function CanvasPage() {
             )}
           </div>
           {showUserJoin && <span className="fade-in" style={{ fontSize: 12, color: "#10B981" }}>王五 加入</span>}
+
+          {/* 分隔线 */}
+          <div style={{ width: 1, height: 20, background: "#363636" }} />
+
+          {/* 分享按钮 */}
+          <ShareDropdown showToast={showToast} />
+
+          {/* 分隔线 */}
+          <div style={{ width: 1, height: 20, background: "#363636" }} />
+
+          {/* 会员中心 */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6, padding: "4px 10px",
+            borderRadius: 8, cursor: "pointer", transition: "background 0.15s",
+          }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+          >
+            <span style={{ fontSize: 14 }}>👑</span>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>会员中心</span>
+          </div>
+
+          {/* 算力 */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 4, padding: "4px 10px",
+            borderRadius: 8, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)",
+          }}>
+            <span style={{ fontSize: 13 }}>⚡</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#F59E0B" }}>34,321</span>
+          </div>
+
+          {/* 个人头像 */}
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%",
+            background: "linear-gradient(135deg, #3B82F6, #8B5CF6)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 13, color: "#fff", cursor: "pointer", border: "2px solid rgba(255,255,255,0.1)",
+            transition: "border-color 0.15s",
+          }}
+            onMouseEnter={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"}
+            onMouseLeave={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}
+          >U</div>
         </div>
       </header>
 
