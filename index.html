@@ -547,17 +547,24 @@ const EDGES = [
 ];
 
 const TOOLBOX_MINE = [
-  { id: "wf-1", name: "我的打光链路" },
-  { id: "wf-2", name: "电影镜头模板" },
-  { id: "wf-3", name: "分镜批量生成" },
-  { id: "wf-4", name: "人像质感增强" },
+  { id: "wf-1", name: "【预设】左弧滑行", cover: "https://picsum.photos/seed/toolbox1/420/520" },
+  { id: "wf-2", name: "【预设】电商手机弹出效", cover: "https://picsum.photos/seed/toolbox2/420/520" },
+  { id: "wf-3", name: "【预设】咖啡杯出场", cover: "https://picsum.photos/seed/toolbox3/420/520" },
+  { id: "wf-4", name: "【预设】360旋转展示", cover: "https://picsum.photos/seed/toolbox4/420/520" },
+  { id: "wf-5", name: "【预设】机械臂视角", cover: "https://picsum.photos/seed/toolbox5/420/520" },
+  { id: "wf-6", name: "【预设】Live 2D", cover: "https://picsum.photos/seed/toolbox6/420/520" },
+  { id: "wf-7", name: "【预设】节奏切片", cover: "https://picsum.photos/seed/toolbox7/420/520" },
+  { id: "wf-8", name: "【预设】夜景情绪片", cover: "https://picsum.photos/seed/toolbox8/420/520" },
+  { id: "wf-9", name: "【预设】礼盒开箱", cover: "https://picsum.photos/seed/toolbox9/420/520" },
 ];
 
 const TOOLBOX_TEAM = [
-  { id: "twf-1", name: "团队剧情片链路" },
-  { id: "twf-2", name: "团队商业片模板" },
-  { id: "twf-3", name: "团队音视频合成" },
-  { id: "twf-4", name: "团队字幕包装链路" },
+  { id: "twf-1", name: "【团队】剧情分镜链路", cover: "https://picsum.photos/seed/teamtool1/420/520" },
+  { id: "twf-2", name: "【团队】人物出场模板", cover: "https://picsum.photos/seed/teamtool2/420/520" },
+  { id: "twf-3", name: "【团队】产品广告包装", cover: "https://picsum.photos/seed/teamtool3/420/520" },
+  { id: "twf-4", name: "【团队】音视频合成", cover: "https://picsum.photos/seed/teamtool4/420/520" },
+  { id: "twf-5", name: "【团队】镜头运镜模板", cover: "https://picsum.photos/seed/teamtool5/420/520" },
+  { id: "twf-6", name: "【团队】风格化短片", cover: "https://picsum.photos/seed/teamtool6/420/520" },
 ];
 
 const ASSET_CATEGORY = ["全部", "人物", "场景", "道具", "特效", "其它"];
@@ -933,29 +940,39 @@ function CanvasPage() {
         {/* 左侧弹层：团队工具箱 */}
         {activeSidebarPanel === "toolbox" && (
           <div className="fade-in" style={{
-            position: "absolute", left: 92, top: "50%", transform: "translateY(-50%)", zIndex: 36,
-            width: 270, borderRadius: 12, overflow: "hidden", background: "rgba(31,31,31,0.96)",
-            border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
+            position: "absolute", left: 92, top: 22, zIndex: 36,
+            width: 760, height: 680, borderRadius: 22, overflow: "hidden", background: "rgba(37,37,37,0.98)",
+            border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 18px 56px rgba(0,0,0,0.5)",
           }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <div style={{ display: "flex", gap: 2 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 18px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ display: "flex", gap: 8 }}>
                 {[{ key: "mine", label: "我的工具箱" }, { key: "team", label: "团队工具箱" }].map((tab) => (
                   <button key={tab.key} onClick={() => setToolboxTab(tab.key)} style={{
-                    height: 28, padding: "0 10px", borderRadius: 8, border: "none", cursor: "pointer",
-                    background: toolboxTab === tab.key ? "rgba(255,255,255,0.12)" : "transparent",
-                    color: toolboxTab === tab.key ? "#fff" : "rgba(255,255,255,0.55)", fontSize: 12,
+                    height: 52, padding: "0 20px", borderRadius: 16, border: "none", cursor: "pointer",
+                    background: toolboxTab === tab.key ? "rgba(255,255,255,0.10)" : "transparent",
+                    color: toolboxTab === tab.key ? "#F5F5F5" : "rgba(255,255,255,0.4)", fontSize: 18, fontWeight: 600,
                   }}>{tab.label}</button>
                 ))}
               </div>
-              <button onClick={() => setActiveSidebarPanel(null)} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 16 }}>×</button>
+              <button onClick={() => setActiveSidebarPanel(null)} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", cursor: "pointer", fontSize: 30, lineHeight: 1 }}>×</button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, padding: 10, maxHeight: 320, overflowY: "auto" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, padding: "22px 22px 28px", maxHeight: 592, overflowY: "auto" }}>
               {toolboxItems.map((item) => (
                 <button key={item.id} onClick={() => useAsset(item.name)} style={{
-                  border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, background: "rgba(255,255,255,0.03)",
-                  padding: "10px 8px", color: "rgba(255,255,255,0.75)", cursor: "pointer", fontSize: 12, textAlign: "left",
+                  border: "none", borderRadius: 16, background: "transparent", padding: 0, cursor: "pointer", textAlign: "left",
                 }}>
-                  {item.name}
+                  <div style={{
+                    width: "100%", aspectRatio: "0.92", borderRadius: 16, overflow: "hidden",
+                    background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.04)", marginBottom: 10,
+                  }}>
+                    <img src={item.cover} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  </div>
+                  <p style={{
+                    fontSize: 16, fontWeight: 500, color: "rgba(255,255,255,0.68)",
+                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                  }}>
+                    {item.name}
+                  </p>
                 </button>
               ))}
             </div>
