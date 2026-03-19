@@ -64,10 +64,19 @@ const generateProjects = (prefix, count) =>
     cover: MOCK_COVERS[i % MOCK_COVERS.length],
     date: "2026/02/03",
     owner: prefix === "t" ? ["张三", "李四", "王五"][i % 3] : null,
+    folderId: null,
   }));
 
 const INITIAL_PERSONAL = generateProjects("p", 8);
 const INITIAL_TEAM = generateProjects("t", 5);
+const INITIAL_PERSONAL_FOLDERS = [
+  { id: "pf-1", name: "未命名文件夹", updatedAt: "编辑于 15 天前" },
+];
+const INITIAL_TEAM_FOLDERS = [
+  { id: "tf-1", name: "团队文件夹", updatedAt: "编辑于 2 天前" },
+];
+const LIBRARY_CARD_HEIGHT = 231;
+const LIBRARY_CARD_MEDIA_HEIGHT = 160;
 
 const ONLINE_USERS = [
   { id: "u1", name: "我", avatar: "👤", color: COLLABORATOR_COLORS[0] },
@@ -169,62 +178,219 @@ const ProjectCard = memo(function ProjectCard({ project, menuItems, onClick }) {
   const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
-    <div style={{ width: "100%", cursor: "pointer", borderRadius: 12, overflow: "hidden", transition: "transform 0.2s" }}
+    <div style={{ width: "100%", height: LIBRARY_CARD_HEIGHT, cursor: "pointer", borderRadius: 14, overflow: "visible", transition: "transform 0.2s", position: "relative", zIndex: menuOpen ? 30 : 1 }}
       onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
       onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
     >
-      <div style={{ position: "relative", aspectRatio: "16/9", width: "100%", overflow: "hidden", borderRadius: 12, border: "0.5px solid #363636" }}>
-        {!imgLoaded && <div style={{ position: "absolute", inset: 0, background: "#171717", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        </div>}
-        <img src={project.cover} alt={project.name} onLoad={() => setImgLoaded(true)}
-          style={{ width: "100%", height: "100%", objectFit: "cover", display: imgLoaded ? "block" : "none" }}
-          onClick={onClick}
-        />
-        {menuItems && (
-          <div style={{ position: "absolute", top: 8, right: 8 }}>
-            <button onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
-              style={{
-                width: 28, height: 28, borderRadius: 8, border: "none", cursor: "pointer",
-                background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", color: "rgba(255,255,255,0.7)",
-                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
-                opacity: 0.7, transition: "opacity 0.15s",
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.opacity = "1"}
-              onMouseLeave={(e) => e.currentTarget.style.opacity = "0.7"}
-            >···</button>
-            {menuOpen && <MenuDropdown items={menuItems} onClose={() => setMenuOpen(false)} />}
+      <div style={{
+        position: "relative", width: "100%", height: "100%",
+        borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)",
+        background: "#1F1F1F", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+        padding: 10, display: "flex", flexDirection: "column",
+      }}>
+        <div style={{ position: "relative", width: "100%", height: LIBRARY_CARD_MEDIA_HEIGHT - 12, borderRadius: 10, overflow: "visible", background: "#171717", flexShrink: 0, zIndex: menuOpen ? 4 : 1 }}>
+          <div style={{ position: "absolute", inset: 0, borderRadius: 10, overflow: "hidden" }}>
+          {!imgLoaded && <div style={{ position: "absolute", inset: 0, background: "#171717", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>}
+          <img src={project.cover} alt={project.name} onLoad={() => setImgLoaded(true)}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: imgLoaded ? "block" : "none" }}
+            onClick={onClick}
+          />
           </div>
-        )}
-      </div>
-      <div style={{ padding: "8px 8px 4px" }}>
-        <p style={{ fontSize: 14, fontWeight: 500, color: "#A8A8A8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {project.name || "untitled"}
-        </p>
-        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>{project.date}</p>
+          {menuItems && (
+            <div style={{ position: "absolute", top: 8, right: 8 }}>
+              <button onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+                style={{
+                  width: 24, height: 24, borderRadius: 8, border: "none", cursor: "pointer",
+                  background: "rgba(20,24,28,0.56)", backdropFilter: "blur(8px)", color: "rgba(255,255,255,0.7)",
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+                  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)",
+                }}
+              >⋯</button>
+              {menuOpen && <MenuDropdown items={menuItems} onClose={() => setMenuOpen(false)} />}
+            </div>
+          )}
+        </div>
+        <div style={{ flex: 1, minHeight: 0, padding: "10px 2px 0", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <p style={{ fontSize: 14, fontWeight: 600, color: "#F3F3F3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.25 }}>
+            {project.name || "untitled"}
+          </p>
+          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.34)", marginTop: 6 }}>{project.date}</p>
+        </div>
       </div>
     </div>
   );
 });
 
-const CreateCard = memo(function CreateCard() {
+const CreateCard = memo(function CreateCard({ title = "开始创作", description = "创建新的视频项目" }) {
   return (
-    <div style={{ width: "100%", cursor: "pointer", borderRadius: 12, overflow: "hidden" }}>
+    <div style={{ width: "100%", height: LIBRARY_CARD_HEIGHT, cursor: "pointer", borderRadius: 14, overflow: "hidden" }}>
       <div style={{
-        aspectRatio: "16/9", width: "100%", borderRadius: 12,
-        border: "0.5px solid rgba(255,255,255,0.24)",
-        background: "linear-gradient(124deg, rgba(172,188,202,0.20) 30.75%, rgba(14,43,83,0.20) 99.42%), linear-gradient(180deg, #000 0%, #171717 100%)",
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
-        transition: "border-color 0.2s, background 0.2s",
-      }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.36)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.24)"; }}
-      >
-        <span style={{ fontSize: 20, color: "#F7F7F7" }}>+</span>
-        <span style={{ fontSize: 14, fontWeight: 500, color: "#F7F7F7" }}>开始创作</span>
+        width: "100%", height: "100%", borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "#1F1F1F", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+        padding: 10, display: "flex", flexDirection: "column",
+      }}>
+        <div style={{
+          width: "100%", height: LIBRARY_CARD_MEDIA_HEIGHT - 12, borderRadius: 10, flexShrink: 0,
+          border: "0.5px solid rgba(255,255,255,0.18)",
+          background: "linear-gradient(124deg, rgba(172,188,202,0.16) 30.75%, rgba(14,43,83,0.16) 99.42%), linear-gradient(180deg, #000 0%, #171717 100%)",
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
+          transition: "border-color 0.2s, background 0.2s",
+        }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.30)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"; }}
+        >
+          <span style={{
+            width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.92)",
+            color: "#111", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 700,
+          }}>+</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "#F7F7F7" }}>{title}</span>
+        </div>
+        <div style={{ flex: 1, minHeight: 0, padding: "10px 2px 0", display: "flex", alignItems: "flex-start" }}>
+          <p style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.72)" }}>{description}</p>
+        </div>
       </div>
-      <div style={{ padding: "10px 8px" }}>
-        <p style={{ fontSize: 14, fontWeight: 500, color: "#A8A8A8" }}>创建新的视频项目</p>
+    </div>
+  );
+});
+
+const FolderCard = memo(function FolderCard({ folder, itemCount, menuItems, onClick, isEditing, editingName, onStartEdit, onEditChange, onEditSave, onEditCancel }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isTitleHover, setIsTitleHover] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  return (
+    <div style={{ width: "100%", height: LIBRARY_CARD_HEIGHT, cursor: "pointer", borderRadius: 12, overflow: "hidden", transition: "transform 0.2s" }}
+      onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
+      onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
+      onClick={onClick}
+    >
+      <div style={{
+        position: "relative", width: "100%", height: "100%", overflow: "hidden", borderRadius: 12,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "linear-gradient(180deg, #24292F 0%, #1E2328 100%)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 30px rgba(0,0,0,0.18)",
+      }}>
+        <div style={{
+          position: "absolute", inset: 14, borderRadius: 14,
+          background: "linear-gradient(180deg, rgba(59,67,75,0.72) 0%, rgba(46,53,60,0.72) 100%)",
+          boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
+        }} />
+        {[
+          { left: 34, top: 70, rotate: -14, z: 1 },
+          { left: 92, top: 42, rotate: 0, z: 3 },
+          { right: 34, top: 68, rotate: 13, z: 2 },
+        ].map((sheet, idx) => (
+          <div key={idx} style={{
+            position: "absolute",
+            left: sheet.left, right: sheet.right, top: sheet.top,
+            width: 118, height: 126, borderRadius: 20,
+            background: "linear-gradient(180deg, #D8DDDF 0%, #C9CED1 100%)",
+            border: "1px solid rgba(26,31,36,0.20)",
+            boxShadow: "0 12px 30px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.46)",
+            transform: `rotate(${sheet.rotate}deg)`,
+            zIndex: sheet.z,
+          }}>
+            <div style={{
+              position: "absolute", left: 16, top: 13, width: 18, height: 18,
+              borderRadius: "50%", border: "1.5px solid rgba(83,88,92,0.70)",
+            }}>
+              <div style={{
+                position: "absolute", left: 4, top: -1, width: 9, height: 18,
+                borderLeft: "1.5px solid rgba(83,88,92,0.70)", borderRight: "1.5px solid rgba(83,88,92,0.70)",
+                borderRadius: 999, transform: "rotate(32deg)",
+              }} />
+            </div>
+          </div>
+        ))}
+        <div style={{
+          position: "absolute", left: 0, right: 0, bottom: 0, height: 92, zIndex: 4,
+          background: "linear-gradient(180deg, rgba(53,61,68,0.86) 0%, rgba(45,52,58,0.96) 100%)",
+          boxShadow: "0 -18px 46px rgba(188,202,208,0.18)",
+          borderTopLeftRadius: 30, borderTopRightRadius: 18,
+          clipPath: "path('M 0 86 L 0 18 C 16 8, 34 6, 56 8 L 158 8 C 172 8, 184 12, 194 20 L 242 44 C 250 48, 258 50, 268 50 L 100% 50 L 100% 86 Z')",
+          filter: "blur(0.2px)",
+        }} />
+        <div style={{
+          position: "absolute", left: 0, right: 0, bottom: 0, height: 92, zIndex: 5,
+          background: "radial-gradient(ellipse at 42% 18%, rgba(199,211,214,0.46) 0%, rgba(199,211,214,0.22) 26%, rgba(199,211,214,0) 58%)",
+          pointerEvents: "none",
+        }} />
+        <div style={{
+          position: "absolute", left: 16, right: 16, bottom: 14, zIndex: 6,
+          display: "flex", flexDirection: "column", gap: 6,
+        }}>
+          <div
+            style={{ display: "flex", alignItems: "center", gap: 6, minHeight: 20 }}
+            onMouseEnter={() => setIsTitleHover(true)}
+            onMouseLeave={() => setIsTitleHover(false)}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {isEditing ? (
+              <input
+                ref={inputRef}
+                value={editingName}
+                onChange={(e) => onEditChange(e.target.value)}
+                onBlur={onEditSave}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") onEditSave();
+                  if (e.key === "Escape") onEditCancel();
+                }}
+                style={{
+                  flex: 1, height: 24, borderRadius: 6, border: "1px solid rgba(255,255,255,0.16)",
+                  background: "rgba(255,255,255,0.06)", color: "#fff", fontSize: 14, fontWeight: 700,
+                  padding: "0 8px", outline: "none",
+                }}
+              />
+            ) : (
+              <>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: "0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {folder.name}
+                </div>
+                {isTitleHover && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStartEdit();
+                    }}
+                    style={{
+                      width: 18, height: 18, borderRadius: 6, border: "none", cursor: "pointer",
+                      background: "rgba(255,255,255,0.10)", color: "rgba(255,255,255,0.78)",
+                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, flexShrink: 0,
+                    }}
+                    aria-label="编辑文件夹名称"
+                  >
+                    ✎
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.40)" }}>{folder.updatedAt}</span>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.40)" }}>{itemCount} 个项目</span>
+          </div>
+        </div>
+        {menuItems && (
+          <div style={{ position: "absolute", top: 8, right: 8 }} onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setMenuOpen(!menuOpen)} style={{
+              width: 28, height: 28, borderRadius: 10, border: "none", cursor: "pointer",
+              background: "rgba(20,24,28,0.56)", color: "rgba(255,255,255,0.72)",
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
+              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)",
+            }}>⋯</button>
+            {menuOpen && <MenuDropdown items={menuItems} onClose={() => setMenuOpen(false)} />}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -234,12 +400,23 @@ const CreateCard = memo(function CreateCard() {
 // 页面一：项目列表（US-01 + US-02）
 // ============================================================
 function ProjectListPage() {
-  const { setPage, showToast } = useContext(AppContext);
+  const { setPage, openCanvas, showToast } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState("personal");
   const [personalProjects, setPersonalProjects] = useState(INITIAL_PERSONAL);
   const [teamProjects, setTeamProjects] = useState(INITIAL_TEAM);
+  const [personalFolders, setPersonalFolders] = useState(INITIAL_PERSONAL_FOLDERS);
+  const [teamFolders, setTeamFolders] = useState(INITIAL_TEAM_FOLDERS);
+  const [personalCurrentFolderId, setPersonalCurrentFolderId] = useState(null);
+  const [teamCurrentFolderId, setTeamCurrentFolderId] = useState(null);
+  const [editingFolderId, setEditingFolderId] = useState(null);
+  const [editingFolderName, setEditingFolderName] = useState("");
   const [migrateTarget, setMigrateTarget] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [moveTarget, setMoveTarget] = useState(null);
+  const [moveModalOpen, setMoveModalOpen] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState(null);
+  const [showUserHoverCard, setShowUserHoverCard] = useState(false);
+  const userHoverHideTimerRef = useRef(null);
 
   const handleMigrate = useCallback((project) => {
     setMigrateTarget(project);
@@ -254,27 +431,119 @@ function ProjectListPage() {
     setMigrateTarget(null);
     showToast("项目已移动至团队空间", "success");
   }, [migrateTarget, showToast]);
+  const handleCreateFolder = useCallback(() => {
+    const nextFolder = {
+      id: `${activeTab === "personal" ? "pf" : "tf"}-${Date.now()}`,
+      name: "未命名文件夹",
+      updatedAt: "编辑于 刚刚",
+    };
+    if (activeTab === "personal") {
+      setPersonalFolders((prev) => [nextFolder, ...prev]);
+    } else {
+      setTeamFolders((prev) => [nextFolder, ...prev]);
+    }
+    showToast("新建文件夹成功", "success");
+  }, [activeTab, showToast]);
+  const handleOpenMoveModal = useCallback((project) => {
+    setMoveTarget(project);
+    setSelectedFolderId(null);
+    setMoveModalOpen(true);
+  }, []);
+  const startFolderRename = useCallback((folder) => {
+    setEditingFolderId(folder.id);
+    setEditingFolderName(folder.name);
+  }, []);
+  const cancelFolderRename = useCallback(() => {
+    setEditingFolderId(null);
+    setEditingFolderName("");
+  }, []);
+  const saveFolderRename = useCallback(() => {
+    const nextName = editingFolderName.trim();
+    if (!editingFolderId) return;
+    if (!nextName) {
+      cancelFolderRename();
+      return;
+    }
+    if (activeTab === "personal") {
+      setPersonalFolders((prev) => prev.map((folder) => (
+        folder.id === editingFolderId ? { ...folder, name: nextName } : folder
+      )));
+    } else {
+      setTeamFolders((prev) => prev.map((folder) => (
+        folder.id === editingFolderId ? { ...folder, name: nextName } : folder
+      )));
+    }
+    setEditingFolderId(null);
+    setEditingFolderName("");
+    showToast("文件夹名称已更新", "success");
+  }, [activeTab, cancelFolderRename, editingFolderId, editingFolderName, showToast]);
+  const handleConfirmMove = useCallback(() => {
+    if (!moveTarget || !selectedFolderId) {
+      showToast("请先选择一个文件夹", "warning");
+      return;
+    }
+    if (activeTab === "personal") {
+      setPersonalProjects((prev) => prev.map((project) => (
+        project.id === moveTarget.id ? { ...project, folderId: selectedFolderId } : project
+      )));
+    } else {
+      setTeamProjects((prev) => prev.map((project) => (
+        project.id === moveTarget.id ? { ...project, folderId: selectedFolderId } : project
+      )));
+    }
+    setMoveModalOpen(false);
+    setMoveTarget(null);
+    setSelectedFolderId(null);
+    showToast("项目已移动成功", "success");
+  }, [activeTab, moveTarget, selectedFolderId, showToast]);
+  const clearUserHoverHideTimer = useCallback(() => {
+    if (userHoverHideTimerRef.current) {
+      clearTimeout(userHoverHideTimerRef.current);
+      userHoverHideTimerRef.current = null;
+    }
+  }, []);
+  const openUserHoverCard = useCallback(() => {
+    clearUserHoverHideTimer();
+    setShowUserHoverCard(true);
+  }, [clearUserHoverHideTimer]);
+  const scheduleUserHoverCardClose = useCallback(() => {
+    clearUserHoverHideTimer();
+    userHoverHideTimerRef.current = setTimeout(() => {
+      setShowUserHoverCard(false);
+      userHoverHideTimerRef.current = null;
+    }, 2300);
+  }, [clearUserHoverHideTimer]);
+
+  useEffect(() => () => clearUserHoverHideTimer(), [clearUserHoverHideTimer]);
 
   const getPersonalMenuItems = useCallback((project) => [
-    { label: "打开", onClick: () => setPage("canvas") },
+    { label: "打开", onClick: () => openCanvas("default") },
     { label: "重命名", onClick: () => showToast("重命名功能（演示）", "info") },
     { label: "移动至团队", onClick: () => handleMigrate(project) },
+    { label: "移动至文件夹", onClick: () => handleOpenMoveModal(project) },
     { label: "删除项目", danger: true, onClick: () => {
       setPersonalProjects((prev) => prev.filter((p) => p.id !== project.id));
       showToast("项目已删除", "info");
     }},
-  ], [handleMigrate, showToast, setPage]);
+  ], [handleMigrate, handleOpenMoveModal, openCanvas, showToast]);
 
   const getTeamMenuItems = useCallback((project) => [
-    { label: "打开", onClick: () => setPage("canvas") },
+    { label: "打开", onClick: () => openCanvas("default") },
     { label: "重命名", onClick: () => showToast("重命名功能（演示）", "info") },
+    { label: "移动至文件夹", onClick: () => handleOpenMoveModal(project) },
     { label: "删除项目", danger: true, onClick: () => {
       setTeamProjects((prev) => prev.filter((p) => p.id !== project.id));
       showToast("项目已删除", "info");
     }},
-  ], [showToast, setPage]);
+  ], [handleOpenMoveModal, openCanvas, showToast]);
 
+  const folders = activeTab === "personal" ? personalFolders : teamFolders;
   const projects = activeTab === "personal" ? personalProjects : teamProjects;
+  const currentFolderId = activeTab === "personal" ? personalCurrentFolderId : teamCurrentFolderId;
+  const setCurrentFolderId = activeTab === "personal" ? setPersonalCurrentFolderId : setTeamCurrentFolderId;
+  const currentFolder = folders.find((folder) => folder.id === currentFolderId) || null;
+  const rootProjects = projects.filter((project) => !project.folderId);
+  const folderProjects = currentFolderId ? projects.filter((project) => project.folderId === currentFolderId) : [];
   const menuItemsFn = activeTab === "personal" ? getPersonalMenuItems : getTeamMenuItems;
 
   return (
@@ -296,50 +565,119 @@ function ProjectListPage() {
           <span style={{ cursor: "pointer", fontSize: 16, opacity: 0.6 }}>🔔</span>
           <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>会员中心</span>
           <span style={{ fontSize: 12, color: "#F59E0B" }}>⚡ 300</span>
-          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, #3B82F6, #8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>U</div>
+          <div
+            style={{ position: "relative" }}
+            onMouseEnter={openUserHoverCard}
+            onMouseLeave={scheduleUserHoverCardClose}
+          >
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, #3B82F6, #8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#fff", cursor: "pointer" }}>U</div>
+            {showUserHoverCard && (
+              <UserHoverCard
+                showToast={showToast}
+                onMouseEnter={openUserHoverCard}
+                onMouseLeave={scheduleUserHoverCardClose}
+                onOpenTeamCenter={() => {
+                  clearUserHoverHideTimer();
+                  setShowUserHoverCard(false);
+                  setPage("teamCenter");
+                }}
+              />
+            )}
+          </div>
         </div>
       </header>
 
       {/* Tabs */}
       <div style={{ padding: "20px 24px 0", maxWidth: 1440, margin: "0 auto" }}>
-        <div style={{ display: "flex", gap: 0, borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 24 }}>
-          {[
-            { key: "personal", label: "个人" },
-            { key: "team", label: "团队项目" },
-          ].map((tab) => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
-              padding: "10px 20px", fontSize: 14, fontWeight: 500, border: "none", cursor: "pointer",
-              background: "transparent", position: "relative",
-              color: activeTab === tab.key ? "#fff" : "rgba(255,255,255,0.4)",
-              transition: "color 0.2s",
-            }}>
-              {tab.label}
-              {activeTab === tab.key && (
-                <div style={{
-                  position: "absolute", bottom: -1, left: 20, right: 20, height: 2,
-                  background: "#fff", borderRadius: 1,
-                }} />
-              )}
-            </button>
-          ))}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, borderBottom: "1px solid rgba(255,255,255,0.08)", marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+            {currentFolder ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 0" }}>
+                <button onClick={() => setCurrentFolderId(null)} style={{
+                  border: "none", background: "transparent", cursor: "pointer",
+                  color: "rgba(255,255,255,0.56)", fontSize: 14, padding: 0,
+                }}>
+                  {activeTab === "personal" ? "个人" : "团队项目"}
+                </button>
+                <span style={{ color: "rgba(255,255,255,0.36)", fontSize: 14 }}>›</span>
+                <span style={{ color: "#fff", fontSize: 14, fontWeight: 600 }}>
+                  {currentFolder.name} ({folderProjects.length})
+                </span>
+              </div>
+            ) : (
+              [
+                { key: "personal", label: "个人" },
+                { key: "team", label: "团队项目" },
+              ].map((tab) => (
+                <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
+                  padding: "10px 20px", fontSize: 14, fontWeight: 500, border: "none", cursor: "pointer",
+                  background: "transparent", position: "relative",
+                  color: activeTab === tab.key ? "#fff" : "rgba(255,255,255,0.4)",
+                  transition: "color 0.2s",
+                }}>
+                  {tab.label}
+                  {activeTab === tab.key && (
+                    <div style={{
+                      position: "absolute", bottom: -1, left: 20, right: 20, height: 2,
+                      background: "#fff", borderRadius: 1,
+                    }} />
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+          <button onClick={currentFolder ? () => showToast("新建项目（演示）", "info") : handleCreateFolder} style={{
+            height: 32, padding: "0 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.12)",
+            background: "transparent", color: "rgba(255,255,255,0.84)", fontSize: 13, cursor: "pointer",
+          }}>{currentFolder ? "新建项目" : "新建文件夹"}</button>
         </div>
 
         {/* Grid */}
         <div style={{
           display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 16,
         }}>
-          <CreateCard />
-          {projects.map((project) => (
+          <div onClick={() => openCanvas("blank")}>
+            <CreateCard title={currentFolder ? "新建项目" : "开始创作"} description={currentFolder ? "" : "创建新的视频项目"} />
+          </div>
+          {!currentFolder && folders.map((folder) => (
+              <FolderCard
+                key={folder.id}
+                folder={folder}
+                itemCount={projects.filter((project) => project.folderId === folder.id).length}
+              isEditing={editingFolderId === folder.id}
+              editingName={editingFolderName}
+              onStartEdit={() => startFolderRename(folder)}
+              onEditChange={setEditingFolderName}
+              onEditSave={saveFolderRename}
+              onEditCancel={cancelFolderRename}
+                menuItems={[
+                  { label: "打开", onClick: () => setCurrentFolderId(folder.id) },
+                  { label: "重命名", onClick: () => startFolderRename(folder) },
+                  { label: "删除", danger: true, onClick: () => {
+                    if (activeTab === "personal") {
+                      setPersonalFolders((prev) => prev.filter((item) => item.id !== folder.id));
+                      setPersonalProjects((prev) => prev.map((project) => project.folderId === folder.id ? { ...project, folderId: null } : project));
+                    } else {
+                      setTeamFolders((prev) => prev.filter((item) => item.id !== folder.id));
+                      setTeamProjects((prev) => prev.map((project) => project.folderId === folder.id ? { ...project, folderId: null } : project));
+                    }
+                    showToast("文件夹已删除", "info");
+                  } },
+                ]}
+                onClick={() => setCurrentFolderId(folder.id)}
+              />
+            ))}
+          {(currentFolder ? folderProjects : rootProjects).map((project) => (
             <ProjectCard key={project.id} project={project}
               menuItems={menuItemsFn(project)}
-              onClick={() => setPage("canvas")}
+              onClick={() => openCanvas("default")}
             />
           ))}
         </div>
 
-        {projects.length === 0 && (
+        {(currentFolder ? folderProjects.length === 0 : projects.length === 0) && (
           <div style={{ textAlign: "center", padding: "80px 0", color: "rgba(255,255,255,0.3)", fontSize: 14 }}>
-            {activeTab === "personal" ? "暂无个人项目" : "暂无团队项目"}
+            {currentFolder ? "当前文件夹内暂无项目" : (activeTab === "personal" ? "暂无个人项目" : "暂无团队项目")}
           </div>
         )}
       </div>
@@ -381,6 +719,58 @@ function ProjectListPage() {
           >移动到团队</button>
         </div>
       </Modal>
+
+      {moveModalOpen && (
+        <>
+          <div onClick={() => setMoveModalOpen(false)} style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.64)", zIndex: 120,
+          }} />
+          <div className="fade-in" style={{
+            position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
+            width: 690, zIndex: 121, borderRadius: 24, overflow: "hidden",
+            background: "rgba(41,41,41,0.98)", border: "1px solid rgba(255,255,255,0.10)",
+            boxShadow: "0 20px 70px rgba(0,0,0,0.55)",
+          }}>
+            <div style={{ padding: "26px 28px 18px", fontSize: 24, fontWeight: 700, color: "#fff" }}>移动至文件夹</div>
+            <div style={{ padding: "0 28px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
+              {folders.length === 0 ? (
+                <div style={{
+                  height: 160, borderRadius: 20, background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "rgba(255,255,255,0.42)", fontSize: 15,
+                }}>暂无文件夹，请先新建文件夹</div>
+              ) : (
+                folders.map((folder) => {
+                  const isSelected = selectedFolderId === folder.id;
+                  const count = projects.filter((project) => project.folderId === folder.id).length;
+                  return (
+                    <button key={folder.id} onClick={() => setSelectedFolderId(folder.id)} style={{
+                      border: isSelected ? "1px solid rgba(255,255,255,0.18)" : "1px solid rgba(255,255,255,0.06)",
+                      background: isSelected ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
+                      cursor: "pointer", borderRadius: 20, minHeight: 116, padding: "0 22px",
+                      color: "#fff", textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "center", gap: 10,
+                    }}>
+                      <div style={{ fontSize: 24, fontWeight: 700 }}>{folder.name}</div>
+                      <div style={{ fontSize: 16, color: "rgba(255,255,255,0.42)" }}>{count} 个项目</div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, padding: "0 28px 28px" }}>
+              <button onClick={() => setMoveModalOpen(false)} style={{
+                height: 72, borderRadius: 20, border: "1px solid rgba(255,255,255,0.14)", cursor: "pointer",
+                background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 22, fontWeight: 700,
+              }}>取消</button>
+              <button onClick={handleConfirmMove} style={{
+                height: 72, borderRadius: 20, border: "none", cursor: folders.length === 0 ? "not-allowed" : "pointer",
+                background: selectedFolderId ? "#BFBFBF" : "rgba(255,255,255,0.18)", color: "#111", fontSize: 22, fontWeight: 700,
+                opacity: folders.length === 0 ? 0.45 : 1,
+              }}>继续</button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -488,6 +878,145 @@ const ShareDropdown = memo(function ShareDropdown({ showToast }) {
   );
 });
 
+const UserHoverCard = memo(function UserHoverCard({ onOpenTeamCenter, onMouseEnter, onMouseLeave, showToast }) {
+  const menuItems = [
+    { label: "小小的果核", badge: "旗舰版VIP", right: "切换", action: () => showToast("切换身份（演示）", "info") },
+    { label: "个人中心", action: () => showToast("个人中心（演示）", "info") },
+    { label: "团队中心", action: onOpenTeamCenter },
+    { label: "AI 水印设置", action: () => showToast("AI 水印设置（演示）", "info") },
+    { label: "退出登录", action: () => showToast("已退出登录（演示）", "info") },
+  ];
+
+  return (
+    <div className="fade-in" style={{
+      position: "absolute", top: "calc(100% + 8px)", right: -2, width: 360,
+      borderRadius: 18, overflow: "hidden",
+      background: "rgba(30,30,30,0.995)", border: "1px solid rgba(255,255,255,0.10)",
+      boxShadow: "0 20px 56px rgba(0,0,0,0.52)", zIndex: 220,
+    }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      <div style={{ padding: "14px 14px 12px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, minWidth: 0 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%",
+              background: "linear-gradient(135deg, #A6F0BA, #74D79B)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#fff", fontSize: 16, border: "1px solid rgba(255,255,255,0.16)", flexShrink: 0,
+            }}>👱</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 12, lineHeight: 1.2, fontWeight: 600, color: "#fff", marginBottom: 5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>果核里的宇宙_</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}>
+                <span style={{ fontSize: 9, color: "rgba(255,255,255,0.34)", whiteSpace: "nowrap" }}>ID:a39155b438a64...</span>
+                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.26)" }}>▢</span>
+              </div>
+              <span style={{
+                height: 22, padding: "0 10px", borderRadius: 999,
+                border: "1px solid rgba(255,255,255,0.22)", display: "inline-flex",
+                alignItems: "center", color: "rgba(255,255,255,0.74)", fontSize: 9, fontWeight: 500,
+                background: "rgba(255,255,255,0.02)", whiteSpace: "nowrap",
+              }}>Access key</span>
+            </div>
+          </div>
+          <button onClick={() => showToast("订阅与开发票（演示）", "info")} style={{
+            border: "none", background: "transparent", cursor: "pointer", color: "rgba(255,255,255,0.78)",
+            fontSize: 9, lineHeight: 1.35, display: "flex", alignItems: "center", gap: 4, textAlign: "left", paddingTop: 1,
+            flexShrink: 0,
+          }}>
+            <span>订阅与<br />开发票</span>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.58)" }}>›</span>
+          </button>
+        </div>
+
+        <div style={{
+          borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.05)",
+          background: "linear-gradient(180deg, rgba(96,66,20,0.92) 0%, rgba(74,54,24,0.92) 100%)",
+          marginBottom: 10,
+        }}>
+          <div style={{
+            display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center",
+            padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 12 }}>💎</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 10, lineHeight: 1.2, fontWeight: 600, color: "#FFF5DF" }}>旗舰版团队VIP</span>
+                <span style={{ fontSize: 10, lineHeight: 1.2, fontWeight: 600, color: "#FFF5DF" }}>2026-05-10到期</span>
+              </div>
+            </div>
+            <button onClick={onOpenTeamCenter} style={{
+              minWidth: 64, height: 26, padding: "0 12px", borderRadius: 999, border: "none", cursor: "pointer",
+              background: "rgba(0,0,0,0.34)", color: "#fff", fontSize: 9, fontWeight: 600, lineHeight: 1.1,
+              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
+            }}>查看团队</button>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px" }}>
+            <span style={{ fontSize: 9, color: "rgba(255,255,255,0.82)" }}>活动权益：F.2 [pro] 免积分 有效期 10天</span>
+            <button onClick={() => showToast("查看更多权益（演示）", "info")} style={{
+              border: "none", background: "transparent", cursor: "pointer", color: "#FFF0D1", fontSize: 9, fontWeight: 600,
+            }}>查看更多</button>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+          <div style={{
+            minHeight: 98, borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)", padding: "12px 12px",
+            background: "rgba(255,255,255,0.015)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "rgba(255,255,255,0.60)", fontSize: 10, marginBottom: 20 }}>
+              <span>积分余额</span>
+              <button onClick={() => showToast("充值（演示）", "info")} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.72)", cursor: "pointer", fontSize: 10 }}>充值</button>
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+              <span style={{ fontSize: 20, fontWeight: 700, color: "#fff", letterSpacing: "0.01em" }}>77129</span>
+              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.74)" }}>点</span>
+              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.34)" }}>›</span>
+            </div>
+            <div style={{ marginTop: 10, fontSize: 9, color: "rgba(255,255,255,0.60)" }}>TV积分80点 ↗</div>
+          </div>
+          <div style={{
+            minHeight: 98, borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)", padding: "12px 12px",
+            background: "rgba(255,255,255,0.015)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "rgba(255,255,255,0.60)", fontSize: 10, marginBottom: 20 }}>
+              <span>存储空间</span>
+              <button onClick={() => showToast("管理资产（演示）", "info")} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.72)", cursor: "pointer", fontSize: 10 }}>管理资产</button>
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+              <span style={{ fontSize: 20, fontWeight: 700, color: "#fff", letterSpacing: "0.01em" }}>2.6G</span>
+              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.56)" }}>/1830G</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {menuItems.map((item) => (
+            <button key={item.label} onClick={item.action} style={{
+              height: 34, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 8px",
+              color: "#fff", fontSize: 10, textAlign: "left",
+            }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 14, textAlign: "center", color: "rgba(255,255,255,0.86)", fontSize: 10 }}>
+                  {item.label === "个人中心" ? "◌" : item.label === "团队中心" ? "◎" : item.label === "AI 水印设置" ? "▭" : item.label === "退出登录" ? "⇱" : "◔"}
+                </span>
+                <span style={{ fontWeight: 600, letterSpacing: "0.01em" }}>{item.label}</span>
+                {item.badge && <span style={{
+                  height: 18, padding: "0 6px", borderRadius: 6, background: "#FFF2E0", color: "#9E6A26",
+                  display: "inline-flex", alignItems: "center", fontSize: 9, fontWeight: 700,
+                }}>{item.badge}</span>}
+              </div>
+              {item.right && <span style={{ color: "rgba(255,255,255,0.42)", fontSize: 10 }}>{item.right}</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+});
+
 // ============================================================
 // 页面二：画布协作（US-04）
 // ============================================================
@@ -528,7 +1057,7 @@ const NODES_INITIAL = [
     ],
     cost: 0,
   },
-  { id: "n4", label: "音频生成", x: 380, y: 300, type: "process",
+  { id: "n4", label: "音频生成", x: 880, y: 300, type: "process",
     preview: null,
     hint: "AI 生成背景音乐",
     params: [
@@ -580,11 +1109,40 @@ const GALLERY_ASSETS = Array.from({ length: 15 }, (_, i) => ({
   cover: `https://picsum.photos/seed/gallerypick${i + 1}/320/400`,
 }));
 
+const SUBJECT_ASSETS = {
+  mine: [
+    { id: "subject-create", name: "创建主体", cover: null, isCreate: true },
+    { id: "subject-m1", name: "我的主体 1", cover: "https://picsum.photos/seed/mysubject1/320/420" },
+    { id: "subject-m2", name: "我的主体 2", cover: "https://picsum.photos/seed/mysubject2/320/420" },
+  ],
+  team: [
+    { id: "subject-create-team", name: "创建主体", cover: null, isCreate: true },
+    { id: "subject-t1", name: "团队主体 1", cover: "https://picsum.photos/seed/teamsubject1/320/420" },
+    { id: "subject-t2", name: "团队主体 2", cover: "https://picsum.photos/seed/teamsubject2/320/420" },
+  ],
+};
+
+const GROUP_PRESET = {
+  id: "group-1",
+  x: 244,
+  y: 258,
+  width: 598,
+  height: 346,
+  cover: "https://picsum.photos/seed/groupcover/520/640",
+  items: [
+    { id: "g1", label: "分组 #1", cover: "https://picsum.photos/seed/group1/640/360" },
+    { id: "g2", label: "分组 #2", cover: "https://picsum.photos/seed/group2/640/360" },
+    { id: "g3", label: "分组 #3", cover: "https://picsum.photos/seed/group3/640/360" },
+    { id: "g4", label: "分组 #4", cover: "https://picsum.photos/seed/group4/640/360" },
+  ],
+};
+
 function CanvasPage() {
-  const { setPage, showToast } = useContext(AppContext);
-  const [nodes, setNodes] = useState(NODES_INITIAL);
+  const { setPage, canvasEntryMode, showToast } = useContext(AppContext);
+  const isBlankCanvas = canvasEntryMode === "blank";
+  const [nodes, setNodes] = useState(() => (isBlankCanvas ? [] : NODES_INITIAL));
   const [selectedNode, setSelectedNode] = useState(null);
-  const [editingUser, setEditingUser] = useState({ n2: ONLINE_USERS[1] });
+  const [editingUser, setEditingUser] = useState(() => (isBlankCanvas ? {} : { n2: ONLINE_USERS[1] }));
   const [generatingNode, setGeneratingNode] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(ONLINE_USERS);
   const [showUserJoin, setShowUserJoin] = useState(false);
@@ -596,6 +1154,9 @@ function CanvasPage() {
   const [assetSubTab, setAssetSubTab] = useState("asset");
   const [assetCategory, setAssetCategory] = useState("全部");
   const [showStyleLibrary, setShowStyleLibrary] = useState(false);
+  const [styleLibraryTab, setStyleLibraryTab] = useState("广场");
+  const [showSubjectLibrary, setShowSubjectLibrary] = useState(false);
+  const [subjectLibraryTab, setSubjectLibraryTab] = useState("team");
   const [showTeamAssetHub, setShowTeamAssetHub] = useState(false);
   const [showAssetPicker, setShowAssetPicker] = useState(false);
   const [assetPickerScope, setAssetPickerScope] = useState("personal");
@@ -603,15 +1164,31 @@ function CanvasPage() {
   const [assetPickerMediaTab, setAssetPickerMediaTab] = useState("图片");
   const [selectedGalleryIds, setSelectedGalleryIds] = useState([]);
   const [hoveredSidebar, setHoveredSidebar] = useState(null);
+  const [showUserHoverCard, setShowUserHoverCard] = useState(false);
+  const userHoverHideTimerRef = useRef(null);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [selectedGroupItem, setSelectedGroupItem] = useState("g1");
+  const [showSaveToolboxModal, setShowSaveToolboxModal] = useState(false);
+  const [saveToolboxMode, setSaveToolboxMode] = useState("create");
+  const [selectedToolboxCollectionId, setSelectedToolboxCollectionId] = useState("tb-1");
 
   const toolboxItems = toolboxTab === "mine" ? TOOLBOX_MINE : TOOLBOX_TEAM;
   const visibleToolboxItems = toolboxSubTab === "myAsset" ? toolboxItems.slice(0, 1) : [];
   const panelAssets = buildMockAssets(`${assetScopeTab}-${assetSubTab}`);
   const styleAssets = buildMockAssets("style");
   const pickerAssets = buildMockAssets(assetPickerScope === "personal" ? "personalAsset" : "teamAsset");
+  const subjectAssets = SUBJECT_ASSETS[subjectLibraryTab];
+  const toolboxCollections = [
+    { id: "tb-1", name: "混沌剑神铭文", cover: GROUP_PRESET.cover, tone: "image" },
+    { id: "tb-2", name: "工作流", tone: "empty" },
+    { id: "tb-3", name: "古风角色参考", cover: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80", tone: "image" },
+    { id: "tb-4", name: "电影镜头库", cover: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80", tone: "image" },
+    { id: "tb-5", name: "奇幻场景合集", cover: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80", tone: "image" },
+  ];
 
   // 模拟他人实时操作
   useEffect(() => {
+    if (isBlankCanvas) return;
     const t1 = setTimeout(() => {
       setEditingUser((prev) => ({ ...prev, n4: ONLINE_USERS[2] }));
     }, 2000);
@@ -629,7 +1206,7 @@ function CanvasPage() {
       setTimeout(() => setShowUserJoin(false), 2000);
     }, 3000);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, []);
+  }, [isBlankCanvas]);
 
   const handleGenerate = useCallback((nodeId) => {
     if (generatingNode) {
@@ -647,6 +1224,10 @@ function CanvasPage() {
   const getNodeCenter = (node) => ({ x: node.x + 70, y: node.y + 30 });
   const togglePanel = (panelKey) => setActiveSidebarPanel((prev) => (prev === panelKey ? null : panelKey));
   const useAsset = (name) => showToast(`已应用「${name}」到当前节点，并同步给团队成员`, "success");
+  const openSubjectLibrary = useCallback((tab = "team") => {
+    setSubjectLibraryTab(tab);
+    setTimeout(() => setShowSubjectLibrary(true), 0);
+  }, []);
   const openGalleryPicker = useCallback((scope = "personal") => {
     setActiveSidebarPanel(null);
     setAssetPickerScope(scope);
@@ -665,6 +1246,30 @@ function CanvasPage() {
       return [...prev, assetId];
     });
   }, [showToast]);
+  const openSaveToolboxModal = useCallback(() => {
+    setShowSaveToolboxModal(true);
+    setSaveToolboxMode("create");
+    setSelectedToolboxCollectionId("tb-1");
+  }, []);
+  const clearUserHoverHideTimer = useCallback(() => {
+    if (userHoverHideTimerRef.current) {
+      clearTimeout(userHoverHideTimerRef.current);
+      userHoverHideTimerRef.current = null;
+    }
+  }, []);
+  const openUserHoverCard = useCallback(() => {
+    clearUserHoverHideTimer();
+    setShowUserHoverCard(true);
+  }, [clearUserHoverHideTimer]);
+  const scheduleUserHoverCardClose = useCallback(() => {
+    clearUserHoverHideTimer();
+    userHoverHideTimerRef.current = setTimeout(() => {
+      setShowUserHoverCard(false);
+      userHoverHideTimerRef.current = null;
+    }, 2300);
+  }, [clearUserHoverHideTimer]);
+
+  useEffect(() => () => clearUserHoverHideTimer(), [clearUserHoverHideTimer]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
@@ -744,21 +1349,36 @@ function CanvasPage() {
           </div>
 
           {/* 个人头像 */}
-          <div style={{
-            width: 32, height: 32, borderRadius: "50%",
-            background: "linear-gradient(135deg, #3B82F6, #8B5CF6)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 13, color: "#fff", cursor: "pointer", border: "2px solid rgba(255,255,255,0.1)",
-            transition: "border-color 0.15s",
-          }}
-            onMouseEnter={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}
-          >U</div>
+          <div
+            style={{ position: "relative" }}
+            onMouseEnter={openUserHoverCard}
+            onMouseLeave={scheduleUserHoverCardClose}
+          >
+            <div style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: "linear-gradient(135deg, #3B82F6, #8B5CF6)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 13, color: "#fff", cursor: "pointer", border: "2px solid rgba(255,255,255,0.1)",
+              transition: "border-color 0.15s",
+            }}>U</div>
+            {showUserHoverCard && (
+              <UserHoverCard
+                showToast={showToast}
+                onMouseEnter={openUserHoverCard}
+                onMouseLeave={scheduleUserHoverCardClose}
+                onOpenTeamCenter={() => {
+                  clearUserHoverHideTimer();
+                  setShowUserHoverCard(false);
+                  setPage("teamCenter");
+                }}
+              />
+            )}
+          </div>
         </div>
       </header>
 
       {/* Canvas Area */}
-      <div style={{ position: "relative", height: "calc(100vh - 52px)", overflow: "hidden", background: "radial-gradient(circle at 50% 50%, #111 0%, #0a0a0a 100%)" }}>
+      <div onClick={() => { setSelectedNode(null); setSelectedGroup(null); }} style={{ position: "relative", height: "calc(100vh - 52px)", overflow: "hidden", background: "radial-gradient(circle at 50% 50%, #111 0%, #0a0a0a 100%)" }}>
         {/* 网格背景 */}
         <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
           <defs>
@@ -769,7 +1389,7 @@ function CanvasPage() {
           <rect width="100%" height="100%" fill="url(#grid)" />
 
           {/* 连线 */}
-          {EDGES.map((edge) => {
+          {!isBlankCanvas && EDGES.map((edge) => {
             const from = getNodeCenter(nodes.find((n) => n.id === edge.from));
             const to = getNodeCenter(nodes.find((n) => n.id === edge.to));
             const midX = (from.x + to.x) / 2;
@@ -893,13 +1513,13 @@ function CanvasPage() {
         {/* 添加节点面板 */}
         {activeSidebarPanel === "create" && (
           <div className="fade-in" style={{
-            position: "absolute", left: 92, top: 18, zIndex: 36, width: 540, borderRadius: 28, overflow: "hidden",
-            background: "linear-gradient(180deg, rgba(45,45,45,0.98) 0%, rgba(35,35,35,0.98) 100%)",
-            border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-            padding: "24px 28px 26px",
+            position: "absolute", left: 84, top: 18, zIndex: 36, width: 314, borderRadius: 22, overflow: "hidden",
+            background: "linear-gradient(180deg, rgba(42,42,42,0.98) 0%, rgba(33,33,33,0.98) 100%)",
+            border: "1px solid rgba(255,255,255,0.07)", boxShadow: "0 16px 42px rgba(0,0,0,0.42)",
+            padding: "18px 18px 20px",
           }}>
-            <div style={{ fontSize: 22, fontWeight: 600, color: "rgba(255,255,255,0.85)", marginBottom: 26 }}>添加节点</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <div style={{ fontSize: 15, fontWeight: 500, color: "rgba(255,255,255,0.58)", marginBottom: 14 }}>添加节点</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
                 { key: "文本", beta: false },
                 { key: "图片", beta: false },
@@ -908,30 +1528,30 @@ function CanvasPage() {
                 { key: "脚本", beta: true },
               ].map((item, idx) => (
                 <button key={item.key} onClick={() => { setActiveSidebarPanel(null); showToast(`已添加${item.key}节点（演示）`, "success"); }} style={{
-                  display: "flex", alignItems: "center", gap: 16, border: "none", background: "transparent", color: "#fff",
-                  cursor: "pointer", textAlign: "left",
+                  display: "flex", alignItems: "center", gap: 12, border: "none", background: "transparent", color: "#fff",
+                  cursor: "pointer", textAlign: "left", borderRadius: 12, padding: "4px 0",
                 }}>
                   <div style={{
-                    width: 70, height: 70, borderRadius: 18, background: "rgba(255,255,255,0.06)",
+                    width: 42, height: 42, borderRadius: 12, background: "rgba(255,255,255,0.08)",
                     display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                   }}>
-                    {idx === 0 && <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M5 7h14"/><path d="M5 12h10"/><path d="M5 17h14"/></svg>}
-                    {idx === 1 && <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="14" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M6.5 17l4.2-4.3 2.6 2.6 2.2-2.3"/><path d="M20 6l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg>}
-                    {idx === 2 && <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="14" height="14" rx="2"/><path d="M10 10l5 3-5 3z"/><path d="M20 6l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg>}
-                    {idx === 3 && <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9v6"/><path d="M11 7v10"/><path d="M15 10v4"/><path d="M19 8v8"/><path d="M3 10v4"/><path d="M22 12c-2.5 0-2.5 2-5 2s-2.5-2-5-2-2.5 2-5 2-2.5-2-5-2"/></svg>}
-                    {idx === 4 && <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h10v16H5z"/><path d="M9 4v16"/><path d="M18 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg>}
+                    {idx === 0 && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M5 7h14"/><path d="M5 12h10"/><path d="M5 17h14"/></svg>}
+                    {idx === 1 && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="14" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M6.5 17l4.2-4.3 2.6 2.6 2.2-2.3"/><path d="M20 6l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg>}
+                    {idx === 2 && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="14" height="14" rx="2"/><path d="M10 10l5 3-5 3z"/><path d="M20 6l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg>}
+                    {idx === 3 && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9v6"/><path d="M11 7v10"/><path d="M15 10v4"/><path d="M19 8v8"/><path d="M3 10v4"/><path d="M22 12c-2.5 0-2.5 2-5 2s-2.5-2-5-2-2.5 2-5 2-2.5-2-5-2"/></svg>}
+                    {idx === 4 && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h10v16H5z"/><path d="M9 4v16"/><path d="M18 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg>}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 24, fontWeight: 600 }}>{item.key}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>{item.key}</span>
                     {item.beta && (
-                      <span style={{ height: 28, padding: "0 10px", borderRadius: 10, background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.75)", fontSize: 14, display: "flex", alignItems: "center" }}>Beta</span>
+                      <span style={{ height: 18, padding: "0 6px", borderRadius: 6, background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.62)", fontSize: 10, display: "flex", alignItems: "center" }}>Beta</span>
                     )}
                   </div>
                 </button>
               ))}
             </div>
-            <div style={{ marginTop: 28, marginBottom: 18, fontSize: 20, fontWeight: 600, color: "rgba(255,255,255,0.72)" }}>添加资源</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <div style={{ marginTop: 14, marginBottom: 8, fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.50)" }}>添加资源</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
                 { key: "上传", icon: "upload" },
                 { key: "从图库选择", icon: "library" },
@@ -944,19 +1564,19 @@ function CanvasPage() {
                   setActiveSidebarPanel(null);
                   showToast(`${item.key}（演示）`, "info");
                 }} style={{
-                  display: "flex", alignItems: "center", gap: 16, border: "none", background: "transparent", color: "#fff",
-                  cursor: "pointer", textAlign: "left",
+                  display: "flex", alignItems: "center", gap: 12, border: "none", background: "transparent", color: "#fff",
+                  cursor: "pointer", textAlign: "left", borderRadius: 12, padding: "4px 0",
                 }}>
                   <div style={{
-                    width: 70, height: 70, borderRadius: 18, background: "rgba(255,255,255,0.06)",
+                    width: 42, height: 42, borderRadius: 12, background: "rgba(255,255,255,0.08)",
                     display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                   }}>
                     {item.icon === "upload" ? (
-                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 16V5" /><path d="M8 9l4-4 4 4" /><path d="M5 19h14" />
                       </svg>
                     ) : (
-                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="7" cy="14" r="3.5" />
                         <path d="M9.5 11.5l4-4" />
                         <path d="M13.5 7.5l3.5 6.5" />
@@ -965,7 +1585,7 @@ function CanvasPage() {
                       </svg>
                     )}
                   </div>
-                  <span style={{ fontSize: 24, fontWeight: 600 }}>{item.key}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600 }}>{item.key}</span>
                 </button>
               ))}
             </div>
@@ -1099,6 +1719,139 @@ function CanvasPage() {
           </div>
         )}
 
+        {/* 画布分组 + 选中态工具栏 */}
+        {!isBlankCanvas && <div
+          onClick={(e) => { e.stopPropagation(); setSelectedGroup(GROUP_PRESET.id); setSelectedNode(null); }}
+          style={{
+            position: "absolute",
+            left: GROUP_PRESET.x,
+            top: GROUP_PRESET.y,
+            width: GROUP_PRESET.width,
+            height: GROUP_PRESET.height,
+            zIndex: selectedGroup === GROUP_PRESET.id ? 28 : 12,
+          }}
+        >
+          {selectedGroup === GROUP_PRESET.id && (
+            <div className="fade-in" style={{
+              position: "absolute", left: "50%", top: -50, transform: "translateX(-50%)",
+              display: "flex", alignItems: "center", gap: 12, padding: "10px 16px",
+              borderRadius: 14, background: "rgba(27,27,27,0.96)", border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 10px 28px rgba(0,0,0,0.45)", color: "#F3F3F3", zIndex: 3,
+            }}>
+              <span style={{
+                width: 16, height: 16, borderRadius: "50%", background: "rgba(255,255,255,0.85)",
+                boxShadow: "0 0 0 2px rgba(255,255,255,0.12)",
+              }} />
+              <button style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.82)", fontSize: 12, cursor: "pointer" }}>▣ 整组执行</button>
+              <button onClick={openSaveToolboxModal} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.82)", fontSize: 12, cursor: "pointer" }}>⊕ 添加到工具箱</button>
+              <button style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.82)", fontSize: 12, cursor: "pointer" }}>✦ 解组</button>
+            </div>
+          )}
+          <div style={{
+            position: "absolute", left: 4, top: 0, fontSize: 12, color: "rgba(255,255,255,0.45)",
+          }}>分组 4 个节点</div>
+          <div style={{
+            position: "absolute", inset: "18px 0 0", padding: 22, borderRadius: 2,
+            border: selectedGroup === GROUP_PRESET.id ? "1px solid rgba(255,255,255,0.28)" : "1px solid rgba(255,255,255,0.08)",
+            background: "rgba(255,255,255,0.04)",
+            boxShadow: selectedGroup === GROUP_PRESET.id ? "0 0 0 1px rgba(255,255,255,0.08) inset" : "none",
+          }}>
+            <div style={{
+              display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, width: "100%", height: "100%",
+            }}>
+              {GROUP_PRESET.items.map((item) => {
+                const isSelectedItem = selectedGroupItem === item.id;
+                return (
+                <div key={item.id} onClick={(e) => { e.stopPropagation(); setSelectedGroup(GROUP_PRESET.id); setSelectedGroupItem(item.id); }} style={{ display: "flex", flexDirection: "column", minWidth: 0, cursor: "pointer" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 6, color: "rgba(255,255,255,0.42)", fontSize: 10 }}>
+                    <span style={{ fontSize: 10 }}>🖼</span>
+                    <span>{item.label}</span>
+                  </div>
+                  <div style={{
+                    flex: 1, borderRadius: 4, overflow: "hidden", background: "#111",
+                    border: isSelectedItem ? "2px solid rgba(255,255,255,0.72)" : "1px solid rgba(255,255,255,0.04)",
+                    boxShadow: isSelectedItem ? "0 0 0 1px rgba(255,255,255,0.08) inset" : "none",
+                  }}>
+                    <img src={item.cover} alt={item.label} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  </div>
+                </div>
+              )})}
+            </div>
+            {selectedGroup === GROUP_PRESET.id && selectedGroupItem && (
+              <div className="fade-in" style={{
+                position: "absolute",
+                left: selectedGroupItem === "g1" || selectedGroupItem === "g3" ? 74 : 378,
+                top: selectedGroupItem === "g1" || selectedGroupItem === "g2" ? 236 : 412,
+                width: 470,
+                borderRadius: 16,
+                overflow: "hidden",
+                background: "rgba(30,30,30,0.98)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 14px 36px rgba(0,0,0,0.45)",
+                zIndex: 2,
+              }}>
+                <div style={{ padding: "10px 12px 8px", display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  {[
+                    { label: "风格", icon: "◈" },
+                    { label: "标记", icon: "◉" },
+                    { label: "聚焦", icon: "◎" },
+                    { label: "主体", icon: "+" },
+                  ].map((action) => (
+                    <button
+                      key={action.label}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (action.label === "风格") {
+                          setStyleLibraryTab("广场");
+                          setShowStyleLibrary(true);
+                          return;
+                        }
+                        if (action.label === "主体") {
+                          openSubjectLibrary("team");
+                          return;
+                        }
+                        showToast(`${action.label}（演示）`, "info");
+                      }}
+                      style={{
+                        width: 72, height: 60, padding: 0, borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)",
+                        background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.72)", cursor: "pointer",
+                        fontSize: 12, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6,
+                      }}
+                    >
+                      <span style={{ fontSize: 14, opacity: 0.9 }}>{action.icon}</span>
+                      <span style={{ fontSize: 12 }}>{action.label}</span>
+                    </button>
+                  ))}
+                  <span style={{ marginLeft: "auto", color: "rgba(255,255,255,0.45)", fontSize: 14, paddingTop: 6 }}>↗</span>
+                </div>
+                <div style={{ padding: "0 14px 12px", color: "rgba(255,255,255,0.76)", fontSize: 12, lineHeight: 1.72 }}>
+                  [画面构图]：正中心对称构图，特写镜头推至中景 | 画面中央是一个散发着幽蓝光芒的琉璃宝瓶，瓶身雕刻着古老的混沌剑阵铭文与繁复的图腾。人物空间与互动关系：无主体人物，宝瓶占据绝对视觉中心。
+                </div>
+                <div style={{ padding: "0 14px 12px", display: "flex", alignItems: "center", gap: 12, color: "rgba(255,255,255,0.68)", fontSize: 12 }}>
+                  <span>◈ Lib Nano Pro ▾</span>
+                  <span>▭ 16:9 ▾</span>
+                  <span>2K ▾</span>
+                  <span>📹 摄像机控制</span>
+                  <span style={{ marginLeft: "auto" }}>1张 ▾</span>
+                  <span style={{ opacity: 0.55 }}>⚡ 0</span>
+                  <button style={{
+                    width: 28, height: 28, borderRadius: 8, border: "none", cursor: "pointer",
+                    background: "rgba(255,255,255,0.92)", color: "#111", fontSize: 14, fontWeight: 700,
+                  }}>↑</button>
+                </div>
+              </div>
+            )}
+            {selectedGroup === GROUP_PRESET.id && (
+              <>
+                <div style={{ position: "absolute", left: -3, top: -3, width: 6, height: 6, background: "rgba(255,255,255,0.6)" }} />
+                <div style={{ position: "absolute", right: -3, top: -3, width: 6, height: 6, background: "rgba(255,255,255,0.6)" }} />
+                <div style={{ position: "absolute", left: -3, bottom: -3, width: 6, height: 6, background: "rgba(255,255,255,0.6)" }} />
+                <div style={{ position: "absolute", right: -3, bottom: -3, width: 6, height: 6, background: "rgba(255,255,255,0.6)" }} />
+              </>
+            )}
+          </div>
+        </div>}
+
         {/* 节点 + 选中工具栏 + 生成器 */}
         {nodes.map((node) => {
           const isEditing = editingUser[node.id];
@@ -1203,6 +1956,34 @@ function CanvasPage() {
                   )}
 
                   <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: 10 }}>
+                    {/* ── 输出区域快捷操作 ── */}
+                    {node.quickActions && node.quickActions.length > 0 && (
+                      <div style={{ display: "flex", gap: 8 }}>
+                        {node.quickActions.map((action) => (
+                          <button
+                            key={action.label}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (action.label === "风格") {
+                                setStyleLibraryTab("广场");
+                                setShowStyleLibrary(true);
+                                return;
+                              }
+                              showToast(`${action.label}（演示）`, "info");
+                            }}
+                            style={{
+                              height: 30, padding: "0 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)",
+                              background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.72)", cursor: "pointer",
+                              fontSize: 12, display: "flex", alignItems: "center", gap: 5,
+                            }}
+                          >
+                            <span style={{ opacity: 0.8 }}>{action.icon}</span>
+                            <span>{action.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
                     {/* ── 参考图预览区 ── */}
                     {node.preview && (
                       <div>
@@ -1297,30 +2078,67 @@ function CanvasPage() {
           );
         })}
 
+        {isBlankCanvas && (
+          <div style={{
+            position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 14,
+            color: "rgba(255,255,255,0.42)", textAlign: "center",
+          }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: 18, border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 22, color: "rgba(255,255,255,0.68)",
+            }}>＋</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: "rgba(255,255,255,0.82)" }}>空白画布</div>
+            <div style={{ fontSize: 13, lineHeight: 1.6, maxWidth: 320 }}>
+              从左侧创建节点，或从团队资产、素材、风格库中开始搭建你的画布。
+            </div>
+          </div>
+        )}
+
         {/* 团队风格库（大面板） */}
         {showStyleLibrary && (
           <div style={{
-            position: "absolute", inset: 30, zIndex: 45, borderRadius: 16, overflow: "hidden",
-            background: "rgba(24,24,24,0.97)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+            position: "absolute", inset: 26, zIndex: 45, borderRadius: 16, overflow: "hidden",
+            background: "rgba(24,24,24,0.985)", border: "1px solid rgba(255,255,255,0.10)", boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
           }}>
-            <div style={{ display: "flex", alignItems: "center", padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>团队风格库</span>
-              <div style={{ display: "flex", gap: 6, marginLeft: 16 }}>
-                {["广场", "我的收藏", "最近使用"].map((t, i) => (
-                  <button key={t} style={{
-                    height: 28, padding: "0 10px", borderRadius: 8, border: "none", cursor: "pointer",
-                    background: i === 0 ? "rgba(255,255,255,0.12)" : "transparent",
-                    color: i === 0 ? "#fff" : "rgba(255,255,255,0.5)", fontSize: 12,
+            <div style={{ display: "flex", alignItems: "center", padding: "12px 16px 10px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <div style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: 4,
+                borderRadius: 999,
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                {["广场", "我的收藏", "团队风格库", "最近使用"].map((t) => (
+                  <button key={t} onClick={() => setStyleLibraryTab(t)} style={{
+                    height: 30, padding: "0 12px", borderRadius: 999, border: "none", cursor: "pointer",
+                    background: styleLibraryTab === t ? "rgba(255,255,255,0.14)" : "transparent",
+                    boxShadow: styleLibraryTab === t ? "inset 0 0 0 1px rgba(255,255,255,0.06)" : "none",
+                    color: styleLibraryTab === t ? "#fff" : "rgba(255,255,255,0.54)", fontSize: 12, fontWeight: 500,
+                    transition: "all 0.15s ease",
                   }}>{t}</button>
                 ))}
               </div>
               <input placeholder="搜索风格名称、作者、标签" style={{
-                marginLeft: "auto", width: 260, height: 30, borderRadius: 8, border: "1px solid rgba(255,255,255,0.12)",
-                background: "rgba(0,0,0,0.35)", color: "#fff", fontSize: 12, padding: "0 10px",
+                marginLeft: 14, width: 250, height: 30, borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)",
+                background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 12, padding: "0 12px",
               }} />
-              <button onClick={() => setShowStyleLibrary(false)} style={{ marginLeft: 10, border: "none", background: "transparent", color: "rgba(255,255,255,0.5)", fontSize: 18, cursor: "pointer" }}>×</button>
+              <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+                <button style={{
+                  height: 28, padding: "0 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)",
+                  background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.72)", cursor: "pointer", fontSize: 12,
+                }}>Lib Nano Pro</button>
+                <button style={{
+                  height: 28, padding: "0 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)",
+                  background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.72)", cursor: "pointer", fontSize: 12,
+                }}>排序 ▾</button>
+                <button onClick={() => setShowStyleLibrary(false)} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.5)", fontSize: 18, cursor: "pointer" }}>×</button>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 8, padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ display: "flex", gap: 10, padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               {STYLE_TAGS.map((tag, i) => (
                 <button key={tag} style={{
                   height: 24, padding: "0 8px", borderRadius: 6, border: "none", cursor: "pointer",
@@ -1329,17 +2147,129 @@ function CanvasPage() {
                 }}>{tag}</button>
               ))}
             </div>
-            <div style={{ padding: 14, display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 12, maxHeight: "calc(100% - 94px)", overflowY: "auto" }}>
+            <div style={{ padding: 14, display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 10, maxHeight: "calc(100% - 100px)", overflowY: "auto" }}>
               {styleAssets.concat(styleAssets).map((asset, i) => (
                 <div key={`${asset.id}-${i}`} onClick={() => { useAsset(asset.name); setShowStyleLibrary(false); }} style={{ cursor: "pointer" }}>
-                  <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", background: "#2a2a2a", aspectRatio: "3/4" }}>
+                  <div style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", background: "#2a2a2a", aspectRatio: "3/4" }}>
                     <img src={asset.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    <div style={{
+                      position: "absolute", left: 0, right: 0, bottom: 0, padding: "8px 8px 7px",
+                      background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.82) 100%)",
+                    }}>
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.92)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {asset.name}
+                      </div>
+                      <div style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 6, fontSize: 9, color: "rgba(255,255,255,0.66)" }}>
+                        <span>▷ {(i + 1) * 320}</span>
+                        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>LibTV 创作者</span>
+                      </div>
+                    </div>
                   </div>
-                  <p style={{ marginTop: 5, fontSize: 11, color: "rgba(255,255,255,0.55)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{asset.name}</p>
                 </div>
               ))}
             </div>
           </div>
+        )}
+
+        {/* 主体库弹窗 */}
+        {showSubjectLibrary && (
+          <>
+            <div onClick={() => setShowSubjectLibrary(false)} style={{
+              position: "absolute", inset: 0, zIndex: 71, background: "rgba(0,0,0,0.42)",
+            }} />
+            <div className="fade-in" style={{
+              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
+              width: 860, height: 620, zIndex: 72, borderRadius: 16, overflow: "hidden",
+              background: "rgba(28,28,28,0.985)", border: "1px solid rgba(255,255,255,0.10)",
+              boxShadow: "0 24px 80px rgba(0,0,0,0.65)",
+            }}>
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "14px 18px 12px", borderBottom: "1px solid rgba(255,255,255,0.08)",
+              }}>
+                <div style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: 4,
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                }}>
+                  {[
+                    { key: "mine", label: "我的主体" },
+                    { key: "team", label: "团队主体" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setSubjectLibraryTab(tab.key)}
+                      style={{
+                        height: 32,
+                        padding: "0 16px",
+                        borderRadius: 999,
+                        border: "none",
+                        background: subjectLibraryTab === tab.key ? "rgba(255,255,255,0.14)" : "transparent",
+                        boxShadow: subjectLibraryTab === tab.key ? "inset 0 0 0 1px rgba(255,255,255,0.06)" : "none",
+                        cursor: "pointer",
+                        color: subjectLibraryTab === tab.key ? "#fff" : "rgba(255,255,255,0.56)",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => setShowSubjectLibrary(false)} style={{
+                  border: "none", background: "transparent", color: "rgba(255,255,255,0.46)",
+                  cursor: "pointer", fontSize: 28, lineHeight: 1,
+                }}>×</button>
+              </div>
+
+              <div style={{ padding: "14px 18px", display: "grid", gridTemplateColumns: "154px 154px 154px 154px", gap: 18, alignContent: "start" }}>
+                {subjectAssets.map((asset) => (
+                  asset.isCreate ? (
+                    <button
+                      key={asset.id}
+                      onClick={() => showToast(subjectLibraryTab === "team" ? "创建团队主体（演示）" : "创建我的主体（演示）", "info")}
+                      style={{
+                        height: 154, borderRadius: 10, cursor: "pointer",
+                        border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.02)",
+                        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12,
+                        color: "rgba(255,255,255,0.86)",
+                      }}
+                    >
+                      <span style={{ fontSize: 34, lineHeight: 1 }}>＋</span>
+                      <span style={{ fontSize: 14 }}>创建主体</span>
+                    </button>
+                  ) : (
+                    <button
+                      key={asset.id}
+                      onClick={() => {
+                        useAsset(asset.name);
+                        setShowSubjectLibrary(false);
+                      }}
+                      style={{
+                        border: "none", background: "transparent", cursor: "pointer", padding: 0,
+                        display: "flex", flexDirection: "column", alignItems: "stretch", gap: 8,
+                      }}
+                    >
+                      <div style={{
+                        height: 154, borderRadius: 10, overflow: "hidden",
+                        border: "1px solid rgba(255,255,255,0.08)", background: "#222",
+                      }}>
+                        <img src={asset.cover} alt={asset.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      </div>
+                      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.72)", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {asset.name}
+                      </div>
+                    </button>
+                  )
+                ))}
+              </div>
+            </div>
+          </>
         )}
 
         {/* 团队资产库（聚合） */}
@@ -1477,6 +2407,150 @@ function CanvasPage() {
           </>
         )}
 
+        {/* 添加到工具箱弹窗 */}
+        {showSaveToolboxModal && (
+          <>
+            <div onClick={() => setShowSaveToolboxModal(false)} style={{
+              position: "absolute", inset: 0, zIndex: 79, background: "rgba(0,0,0,0.45)",
+              backdropFilter: "blur(2px)",
+            }} />
+            <div className="fade-in" style={{
+              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
+              width: 980, zIndex: 80, borderRadius: 14, overflow: "hidden",
+              background: "rgba(29,29,29,0.985)", border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 20px 70px rgba(0,0,0,0.6)",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px 12px" }}>
+                <div style={{ display: "flex", gap: 28 }}>
+                  {[
+                    { key: "create", label: "创建新工具箱" },
+                    { key: "update", label: "更新工具箱" },
+                  ].map((tab) => (
+                    <button key={tab.key} onClick={() => setSaveToolboxMode(tab.key)} style={{
+                      border: "none", background: "transparent", cursor: "pointer",
+                      color: saveToolboxMode === tab.key ? "#F3F3F3" : "rgba(255,255,255,0.42)",
+                      fontSize: 15, fontWeight: saveToolboxMode === tab.key ? 700 : 500, padding: 0,
+                    }}>{tab.label}</button>
+                  ))}
+                </div>
+                <button onClick={() => setShowSaveToolboxModal(false)} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.42)", cursor: "pointer", fontSize: 22, lineHeight: 1 }}>×</button>
+              </div>
+              {saveToolboxMode === "create" ? (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "370px 1fr", gap: 26, padding: "0 18px 18px" }}>
+                    <div>
+                      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.72)", marginBottom: 10 }}>封面</div>
+                      <div style={{
+                        position: "relative", width: "100%", aspectRatio: "1/1", borderRadius: 12, overflow: "hidden",
+                        border: "1px solid rgba(255,255,255,0.06)", background: "#111",
+                      }}>
+                        <img src={GROUP_PRESET.cover} alt="工具箱封面" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                        <button style={{
+                          position: "absolute", left: 10, bottom: 10, height: 28, padding: "0 12px", borderRadius: 999,
+                          border: "1px solid rgba(255,255,255,0.12)", background: "rgba(0,0,0,0.52)", color: "#fff",
+                          cursor: "pointer", fontSize: 12,
+                        }}>↻ 更换封面</button>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.72)" }}>名称</span>
+                        </div>
+                        <div style={{
+                          height: 44, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)",
+                          background: "rgba(255,255,255,0.02)", display: "flex", alignItems: "center", padding: "0 14px",
+                          color: "rgba(255,255,255,0.92)", fontSize: 14,
+                        }}>工具箱</div>
+                      </div>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.72)" }}>标签</span>
+                          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>0/5</span>
+                        </div>
+                        <button style={{
+                          height: 34, padding: "0 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)",
+                          background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.72)", cursor: "pointer", fontSize: 13,
+                        }}>＋ 添加标签</button>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.72)", marginBottom: 8 }}>备注</div>
+                        <div style={{
+                          height: 196, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)",
+                          padding: 14, color: "rgba(255,255,255,0.32)", fontSize: 14, lineHeight: 1.6,
+                        }}>
+                          请输入您的工具箱，例如应用场景、使用步骤及使用技巧
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 18px 18px" }}>
+                    <button onClick={() => { setShowSaveToolboxModal(false); showToast("已创建工具箱（演示）", "success"); }} style={{
+                      height: 38, padding: "0 18px", borderRadius: 10, border: "none", cursor: "pointer",
+                      background: "#3B82F6", color: "#fff", fontSize: 14, fontWeight: 600,
+                    }}>
+                      创建
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ padding: "4px 18px 18px" }}>
+                    <div style={{
+                      display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 22,
+                    }}>
+                      {toolboxCollections.map((item) => {
+                        const selected = selectedToolboxCollectionId === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => setSelectedToolboxCollectionId(item.id)}
+                            style={{
+                              border: selected ? "1px solid rgba(255,255,255,0.82)" : "1px solid rgba(255,255,255,0.08)",
+                              background: "transparent", padding: 0, borderRadius: 18, cursor: "pointer",
+                              textAlign: "left", overflow: "hidden",
+                              boxShadow: selected ? "0 0 0 1px rgba(255,255,255,0.12) inset" : "none",
+                            }}
+                          >
+                            <div style={{
+                              minHeight: 340, borderRadius: 18, background: "rgba(255,255,255,0.03)",
+                              padding: 12, display: "flex", flexDirection: "column",
+                            }}>
+                              <div style={{
+                                flex: 1, borderRadius: 14, overflow: "hidden",
+                                background: item.tone === "empty" ? "rgba(255,255,255,0.08)" : "#111",
+                                border: "1px solid rgba(255,255,255,0.04)", position: "relative",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                              }}>
+                                {item.tone === "image" ? (
+                                  <img src={item.cover} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                                ) : (
+                                  <div style={{ color: "rgba(255,255,255,0.22)", fontSize: 56, lineHeight: 1 }}>🖼️</div>
+                                )}
+                              </div>
+                              <div style={{ padding: "12px 6px 4px", textAlign: "center" }}>
+                                <div style={{ fontSize: 16, fontWeight: 500, color: "#F4F4F4", lineHeight: 1.3 }}>{item.name}</div>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 18px 18px" }}>
+                    <button onClick={() => { setShowSaveToolboxModal(false); showToast(`已更新到「${toolboxCollections.find((item) => item.id === selectedToolboxCollectionId)?.name || "工具箱"}」（演示）`, "success"); }} style={{
+                      height: 38, padding: "0 18px", borderRadius: 10, border: "none", cursor: "pointer",
+                      background: "#3B82F6", color: "#fff", fontSize: 14, fontWeight: 600,
+                    }}>
+                      确认
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </>
+        )}
+
         {/* 左下角 - 图例 */}
         <div style={{
           position: "absolute", left: 16, bottom: 16, padding: 12, borderRadius: 12,
@@ -1516,21 +2590,298 @@ function CanvasPage() {
   );
 }
 
+function TeamCenterPage() {
+  const { setPage, showToast } = useContext(AppContext);
+  const [activeTab, setActiveTab] = useState("member");
+  const [showPointSettingModal, setShowPointSettingModal] = useState(false);
+  const [batchPointValue, setBatchPointValue] = useState("1000");
+  const [memberLimits, setMemberLimits] = useState({
+    1: "1800",
+    2: "1800",
+    3: "1800",
+    4: "1800",
+    5: "1800",
+  });
+  const [memberPointValues, setMemberPointValues] = useState({
+    1: "1000",
+    2: "1000",
+    3: "1000",
+    4: "1000",
+    5: "1000",
+  });
+
+  const members = [
+    { id: 1, name: "果核里的宇宙_", account: "-", cost: "81", limit: "1800", role: "超管", danger: false },
+    { id: 2, name: "Iam_prompt", account: "186****2068", cost: "7205", limit: "1800", role: "转移管理局", danger: true },
+    { id: 3, name: "脆脆鲨", account: "137****0083", cost: "6891", limit: "1800", role: "转移管理局", danger: true },
+    { id: 4, name: "B.rabbit", account: "-", cost: "-", limit: "1800", role: "转移管理局", danger: true },
+    { id: 5, name: "Sahadev", account: "159****4214", cost: "-", limit: "1800", role: "转移管理局", danger: true },
+    { id: 6, name: "暂无成员", account: "-", cost: "0", limit: "1800", role: "", danger: false, empty: true },
+    { id: 7, name: "暂无成员", account: "-", cost: "0", limit: "1800", role: "", danger: false, empty: true },
+    { id: 8, name: "暂无成员", account: "-", cost: "0", limit: "1800", role: "", danger: false, empty: true },
+  ];
+  const activeMembers = members.filter((member) => !member.empty);
+  const totalPoints = activeMembers.reduce((sum, member) => sum + Number(memberPointValues[member.id] || 0), 0);
+
+  const applyBatchPoints = useCallback(() => {
+    setMemberPointValues((prev) => {
+      const next = { ...prev };
+      activeMembers.forEach((member) => {
+        next[member.id] = batchPointValue || "0";
+      });
+      return next;
+    });
+  }, [activeMembers, batchPointValue]);
+  const openPointSettingModal = useCallback(() => {
+    setMemberPointValues(() => {
+      const next = {};
+      activeMembers.forEach((member) => {
+        next[member.id] = memberLimits[member.id] || member.limit || "0";
+      });
+      return next;
+    });
+    setBatchPointValue(memberLimits[activeMembers[0]?.id] || "1000");
+    setShowPointSettingModal(true);
+  }, [activeMembers, memberLimits]);
+  const confirmPointSetting = useCallback(() => {
+    setMemberLimits((prev) => {
+      const next = { ...prev };
+      activeMembers.forEach((member) => {
+        next[member.id] = memberPointValues[member.id] || "0";
+      });
+      return next;
+    });
+    setShowPointSettingModal(false);
+    showToast("积分设置已保存（演示）", "success");
+  }, [activeMembers, memberPointValues, showToast]);
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#F7F8FA", color: "#1F2329" }}>
+      <div style={{ maxWidth: 1380, margin: "0 auto", padding: "20px 24px 40px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              <button onClick={() => setPage("canvas")} style={{
+                border: "none", background: "transparent", cursor: "pointer", color: "#4E5969", fontSize: 13,
+              }}>← 返回</button>
+              <span style={{ fontSize: 24, fontWeight: 700, color: "#1D2129" }}>迷途的果核</span>
+              <span style={{ fontSize: 15, color: "#86909C" }}>✎</span>
+            </div>
+            <div style={{ fontSize: 12, color: "#86909C" }}>
+              累积信息：生效中 14 人+大咖团队VIP（2026-06-30 到期） 团队ID: b3cd92c910821110973c9c63c07598a6
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {["邀请成员", "团队升级", "团队续费", "新增席位"].map((label, idx) => (
+              <button key={label} onClick={() => showToast(`${label}（演示）`, "info")} style={{
+                height: 34, padding: "0 14px", borderRadius: 8, border: idx === 0 ? "none" : "1px solid #BFD4FF",
+                background: idx === 0 ? "#1677FF" : "#F3F8FF", color: idx === 0 ? "#fff" : "#1677FF",
+                fontSize: 13, fontWeight: 600, cursor: "pointer",
+              }}>{label}</button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{
+          background: "#fff", borderRadius: 16, boxShadow: "0 10px 30px rgba(15,35,95,0.05)",
+          border: "1px solid #EEF0F3", overflow: "hidden",
+        }}>
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 22px", borderBottom: "1px solid #EEF0F3" }}>
+            <div style={{ display: "flex", gap: 24 }}>
+              {[
+                { key: "member", label: "团队成员" },
+                { key: "space", label: "团队空间" },
+              ].map((tab) => (
+                <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
+                  height: 54, border: "none", background: "transparent", cursor: "pointer",
+                  color: activeTab === tab.key ? "#1D2129" : "#86909C", fontSize: 15, fontWeight: activeTab === tab.key ? 700 : 500,
+                  borderBottom: activeTab === tab.key ? "3px solid #1D2129" : "3px solid transparent",
+                }}>{tab.label}</button>
+              ))}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 18, color: "#4E5969", fontSize: 13, paddingBottom: 14 }}>
+              <button onClick={openPointSettingModal} style={{
+                border: "none", background: "transparent", cursor: "pointer",
+                color: "#4E5969", fontSize: 13, padding: 0,
+              }}>积分设置</button>
+              <span style={{ color: "#C9CDD4" }}>|</span>
+              <span>◎ 分享设置</span>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 26, padding: "14px 22px", borderBottom: "1px solid #F2F3F5", fontSize: 13, color: "#4E5969" }}>
+            <span>团队权益</span>
+            <span>本月剩余积分 <strong style={{ color: "#1D2129" }}>81471</strong></span>
+            <span>下次发放权益时间: <strong style={{ color: "#1D2129" }}>2026-03-29</strong></span>
+            <span>本月剩余赠送次数: <strong style={{ color: "#1677FF" }}>14</strong></span>
+          </div>
+
+          {activeTab === "member" ? (
+            <div>
+              <div style={{
+                display: "grid", gridTemplateColumns: "1.5fr 1.5fr 1.2fr 1.1fr 1fr",
+                padding: "14px 22px", background: "#FAFBFC", color: "#4E5969", fontSize: 13, fontWeight: 600,
+              }}>
+                <div>成员 (5/14)</div>
+                <div>账号</div>
+                <div>本周期积分消耗</div>
+                <div>积分消耗上限</div>
+                <div style={{ textAlign: "right" }}>操作</div>
+              </div>
+              {members.map((member) => (
+                <div key={member.id} style={{
+                  display: "grid", gridTemplateColumns: "1.5fr 1.5fr 1.2fr 1.1fr 1fr",
+                  padding: "18px 22px", alignItems: "center", borderTop: "1px solid #F2F3F5",
+                  fontSize: 13, color: member.empty ? "#C9CDD4" : "#4E5969", background: member.id === 1 ? "#FCFCFD" : "#fff",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: "50%",
+                      background: member.empty ? "#F2F3F5" : `url(https://picsum.photos/seed/team-member-${member.id}/56/56) center/cover no-repeat`,
+                      border: "1px solid #EEF0F3",
+                    }} />
+                    <span>{member.name}</span>
+                  </div>
+                  <div>{member.account}</div>
+                  <div>{member.cost}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: member.empty ? "#E5E6EB" : "#1D2129", lineHeight: 1.4 }}>
+                    {member.empty ? member.limit : (memberLimits[member.id] || member.limit)}
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    {member.role ? (
+                      <>
+                        <button onClick={() => showToast(`${member.role}（演示）`, "info")} style={{
+                          border: "none", background: "transparent", cursor: "pointer", color: "#86909C", fontSize: 13, marginRight: 12,
+                        }}>{member.role}</button>
+                        <button onClick={() => showToast("解绑（演示）", "warning")} style={{
+                          border: "none", background: "transparent", cursor: "pointer", color: member.danger ? "#F53F3F" : "#C9CDD4", fontSize: 13,
+                        }}>解绑</button>
+                      </>
+                    ) : (
+                      <span style={{ color: "#E5E6EB" }}>解绑</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: "80px 22px", textAlign: "center", color: "#86909C", fontSize: 14 }}>
+              团队空间页面（演示）
+            </div>
+          )}
+        </div>
+      </div>
+
+      {showPointSettingModal && (
+        <>
+          <div onClick={() => setShowPointSettingModal(false)} style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 180,
+          }} />
+          <div className="fade-in" style={{
+            position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
+            width: 770, maxHeight: "88vh", overflow: "hidden", zIndex: 181,
+            borderRadius: 28, background: "#fff", boxShadow: "0 28px 80px rgba(0,0,0,0.25)",
+            border: "1px solid rgba(17,17,17,0.06)",
+          }}>
+            <div style={{ position: "relative", padding: "28px 36px 20px" }}>
+              <div style={{ textAlign: "center", fontSize: 22, fontWeight: 700, color: "#111" }}>积分设置</div>
+              <button onClick={() => setShowPointSettingModal(false)} style={{
+                position: "absolute", right: 26, top: 24, border: "none", background: "transparent",
+                cursor: "pointer", fontSize: 24, color: "#222", lineHeight: 1,
+              }}>×</button>
+            </div>
+
+            <div style={{ padding: "0 36px 28px", maxHeight: "calc(88vh - 84px)", overflowY: "auto" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+                <input
+                  value={batchPointValue}
+                  onChange={(e) => setBatchPointValue(e.target.value.replace(/[^\d]/g, ""))}
+                  style={{
+                    width: 194, height: 42, borderRadius: 12, border: "1px solid #E5E6EB",
+                    background: "#F7F8FA", padding: "0 16px", fontSize: 16, color: "#1D2129", outline: "none",
+                  }}
+                />
+                <button onClick={applyBatchPoints} style={{
+                  border: "none", background: "transparent", cursor: "pointer",
+                  color: "#1D2129", fontSize: 16, fontWeight: 500,
+                }}>批量填充</button>
+              </div>
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                paddingBottom: 18, marginBottom: 6, borderBottom: "1px solid #EEF0F3",
+                fontSize: 17, color: "#1D2129",
+              }}>
+                <span>团队席位：{activeMembers.length}位</span>
+                <span>剩余总积分：{totalPoints}</span>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 18, paddingTop: 8 }}>
+                {activeMembers.map((member) => (
+                  <div key={member.id} style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                      <div style={{
+                        width: 40, height: 40, borderRadius: "50%",
+                        background: `url(https://picsum.photos/seed/team-member-${member.id}/80/80) center/cover no-repeat`,
+                        border: "1px solid #E5E6EB", flexShrink: 0,
+                      }} />
+                      <div style={{ fontSize: 16, color: "#1D2129", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {member.name}
+                      </div>
+                    </div>
+                    <input
+                      value={memberPointValues[member.id] || ""}
+                      onChange={(e) => setMemberPointValues((prev) => ({ ...prev, [member.id]: e.target.value.replace(/[^\d]/g, "") }))}
+                      style={{
+                        width: 196, height: 42, borderRadius: 12, border: "1px solid #E5E6EB",
+                        background: "#F7F8FA", padding: "0 16px", fontSize: 16, color: "#1D2129", outline: "none",
+                        flexShrink: 0,
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 34 }}>
+                <button onClick={() => setShowPointSettingModal(false)} style={{
+                  height: 56, borderRadius: 18, border: "none", cursor: "pointer",
+                  background: "#F1F2F4", color: "#1D2129", fontSize: 16, fontWeight: 500,
+                }}>取消</button>
+                <button onClick={confirmPointSetting} style={{
+                  height: 56, borderRadius: 18, border: "none", cursor: "pointer",
+                  background: "#111", color: "#fff", fontSize: 16, fontWeight: 600,
+                }}>确定</button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ============================================================
 // App 根组件
 // ============================================================
 function App() {
   const [page, setPage] = useState("list");
+  const [canvasEntryMode, setCanvasEntryMode] = useState("default");
   const [toast, setToast] = useState(null);
 
   const showToast = useCallback((message, type) => {
     setToast({ message, type, key: Date.now() });
   }, []);
+  const openCanvas = useCallback((mode = "default") => {
+    setCanvasEntryMode(mode);
+    setPage("canvas");
+  }, []);
 
   return (
-    <AppContext.Provider value={{ setPage, showToast }}>
+    <AppContext.Provider value={{ setPage, openCanvas, canvasEntryMode, showToast }}>
       {page === "list" && <ProjectListPage />}
       {page === "canvas" && <CanvasPage />}
+      {page === "teamCenter" && <TeamCenterPage />}
       {toast && <Toast key={toast.key} message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </AppContext.Provider>
   );
