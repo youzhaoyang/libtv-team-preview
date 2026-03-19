@@ -586,6 +586,7 @@ function CanvasPage() {
   const [showTeamAssetHub, setShowTeamAssetHub] = useState(false);
   const [showAssetPicker, setShowAssetPicker] = useState(false);
   const [assetPickerScope, setAssetPickerScope] = useState("personal");
+  const [hoveredSidebar, setHoveredSidebar] = useState(null);
 
   const toolboxItems = toolboxTab === "mine" ? TOOLBOX_MINE : TOOLBOX_TEAM;
   const panelAssets = buildMockAssets(assetTab);
@@ -747,54 +748,192 @@ function CanvasPage() {
           })}
         </svg>
 
-        {/* 左侧栏（团队资产入口） */}
+        {/* 左侧栏（按截图还原） */}
         <div style={{
-          position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)",
-          display: "flex", flexDirection: "column", gap: 8, padding: 8, borderRadius: 12, zIndex: 35,
-          background: "rgba(29,29,29,0.92)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(8px)",
+          position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)",
+          width: 64, padding: "14px 0 12px", borderRadius: 28, zIndex: 35,
+          background: "linear-gradient(180deg, rgba(45,45,45,0.98) 0%, rgba(35,35,35,0.98) 100%)",
+          border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 14px 40px rgba(0,0,0,0.45)",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
         }}>
           {[
-            { key: "add", label: "+", title: "添加节点" },
-            { key: "toolbox", label: "⎇", title: "打开工具箱" },
-            { key: "asset", label: "◉", title: "我的素材" },
-            { key: "history", label: "◷", title: "历史记录" },
-            { key: "help", label: "?", title: "教程" },
+            { key: "create", title: "添加节点" },
+            { key: "toolbox", title: "打开工具箱" },
+            { key: "asset", title: "我的素材" },
+            { key: "history", title: "历史记录" },
+            { key: "help", title: "教程" },
+            { key: "power", title: "算力" },
           ].map((item, idx) => {
             const isActive = activeSidebarPanel === item.key;
+            const isLight = item.key === "create" && isActive;
             return (
-              <button key={item.key}
-                onClick={() => {
-                  if (item.key === "toolbox" || item.key === "asset") {
-                    togglePanel(item.key);
-                  } else if (item.key === "add") {
-                    showToast("新增节点菜单（演示）", "info");
-                  } else if (item.key === "history") {
-                    showToast("历史记录面板（演示）", "info");
-                  } else {
-                    showToast("使用教程（演示）", "info");
-                  }
-                }}
-                title={item.title}
-                style={{
-                  width: 30, height: 30, borderRadius: 8, border: "none", cursor: "pointer",
-                  background: isActive ? "rgba(255,255,255,0.18)" : "transparent",
-                  color: isActive ? "#fff" : "rgba(255,255,255,0.72)", fontSize: 14,
-                  transition: "all 0.15s",
-                  marginBottom: idx === 3 ? 6 : 0,
-                }}
-                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
-                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
-              >
-                {item.label}
-              </button>
+              <React.Fragment key={item.key}>
+                {idx === 4 && <div style={{ width: 28, height: 1, background: "rgba(255,255,255,0.12)", margin: "2px 0 0" }} />}
+                <div style={{ position: "relative" }}>
+                  <button
+                    onClick={() => {
+                      if (item.key === "create" || item.key === "toolbox" || item.key === "asset") {
+                        togglePanel(item.key);
+                      } else if (item.key === "history") {
+                        showToast("历史记录面板（演示）", "info");
+                      } else if (item.key === "help") {
+                        showToast("使用教程（演示）", "info");
+                      }
+                    }}
+                    onMouseEnter={() => setHoveredSidebar(item.key)}
+                    onMouseLeave={() => setHoveredSidebar((prev) => (prev === item.key ? null : prev))}
+                    style={{
+                      width: 48, height: 48, borderRadius: 14, border: "none", cursor: item.key === "power" ? "default" : "pointer",
+                      background: isLight ? "#E7E7E7" : isActive ? "rgba(255,255,255,0.08)" : "transparent",
+                      color: isLight ? "#151515" : "#F3F3F3",
+                      display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.18s",
+                    }}
+                  >
+                    {item.key === "create" && (
+                      isActive ? (
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
+                          <path d="M5 5L19 19" />
+                          <path d="M19 5L5 19" />
+                        </svg>
+                      ) : (
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
+                          <path d="M12 5v14" />
+                          <path d="M5 12h14" />
+                        </svg>
+                      )
+                    )}
+                    {item.key === "toolbox" && (
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="5" cy="12" r="2.5" />
+                        <circle cx="12" cy="6" r="2.5" />
+                        <circle cx="19" cy="12" r="2.5" />
+                        <circle cx="12" cy="18" r="2.5" />
+                        <path d="M7.2 11l2.7-3.2" />
+                        <path d="M14.1 7.8l2.7 2.4" />
+                        <path d="M9.9 16.2L7.2 13" />
+                      </svg>
+                    )}
+                    {item.key === "asset" && (
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="7" cy="14" r="3.5" />
+                        <path d="M9.5 11.5l4-4" />
+                        <path d="M13.5 7.5l3.5 6.5" />
+                        <path d="M17 14h-5.5" />
+                        <path d="M18.5 7.5l2.5 4.5h-5z" />
+                      </svg>
+                    )}
+                    {item.key === "history" && (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <circle cx="12" cy="12" r="7.5" />
+                        <path d="M12 7.5v4.8l3 1.8" />
+                      </svg>
+                    )}
+                    {item.key === "help" && (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <circle cx="12" cy="12" r="8.5" />
+                        <path d="M9.8 9.2a2.5 2.5 0 114.3 1.7c-.8.6-1.4 1.1-1.4 2.3" />
+                        <circle cx="12" cy="16.8" r="0.8" fill="currentColor" stroke="none" />
+                      </svg>
+                    )}
+                    {item.key === "power" && (
+                      <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: 0.5, opacity: 0.92 }}>6g</span>
+                    )}
+                  </button>
+                  {hoveredSidebar === item.key && item.key !== "power" && (
+                    <div className="fade-in" style={{
+                      position: "absolute", left: 56, top: "50%", transform: "translateY(-50%)",
+                      padding: "10px 14px", borderRadius: 18, background: "#040404", color: "#fff",
+                      fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", boxShadow: "0 8px 20px rgba(0,0,0,0.35)",
+                      pointerEvents: "none",
+                    }}>
+                      {item.title}
+                    </div>
+                  )}
+                </div>
+              </React.Fragment>
             );
           })}
         </div>
 
+        {/* 添加节点面板 */}
+        {activeSidebarPanel === "create" && (
+          <div className="fade-in" style={{
+            position: "absolute", left: 92, top: 18, zIndex: 36, width: 540, borderRadius: 28, overflow: "hidden",
+            background: "linear-gradient(180deg, rgba(45,45,45,0.98) 0%, rgba(35,35,35,0.98) 100%)",
+            border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+            padding: "24px 28px 26px",
+          }}>
+            <div style={{ fontSize: 22, fontWeight: 600, color: "rgba(255,255,255,0.85)", marginBottom: 26 }}>添加节点</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {[
+                { key: "文本", beta: false },
+                { key: "图片", beta: false },
+                { key: "视频", beta: false },
+                { key: "音频", beta: false },
+                { key: "脚本", beta: true },
+              ].map((item, idx) => (
+                <button key={item.key} onClick={() => { setActiveSidebarPanel(null); showToast(`已添加${item.key}节点（演示）`, "success"); }} style={{
+                  display: "flex", alignItems: "center", gap: 16, border: "none", background: "transparent", color: "#fff",
+                  cursor: "pointer", textAlign: "left",
+                }}>
+                  <div style={{
+                    width: 70, height: 70, borderRadius: 18, background: "rgba(255,255,255,0.06)",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    {idx === 0 && <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M5 7h14"/><path d="M5 12h10"/><path d="M5 17h14"/></svg>}
+                    {idx === 1 && <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="14" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M6.5 17l4.2-4.3 2.6 2.6 2.2-2.3"/><path d="M20 6l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg>}
+                    {idx === 2 && <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="14" height="14" rx="2"/><path d="M10 10l5 3-5 3z"/><path d="M20 6l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg>}
+                    {idx === 3 && <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M7 9v6"/><path d="M11 7v10"/><path d="M15 10v4"/><path d="M19 8v8"/><path d="M3 10v4"/><path d="M22 12c-2.5 0-2.5 2-5 2s-2.5-2-5-2-2.5 2-5 2-2.5-2-5-2"/></svg>}
+                    {idx === 4 && <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h10v16H5z"/><path d="M9 4v16"/><path d="M18 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg>}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 24, fontWeight: 600 }}>{item.key}</span>
+                    {item.beta && (
+                      <span style={{ height: 28, padding: "0 10px", borderRadius: 10, background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.75)", fontSize: 14, display: "flex", alignItems: "center" }}>Beta</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div style={{ marginTop: 28, marginBottom: 18, fontSize: 20, fontWeight: 600, color: "rgba(255,255,255,0.72)" }}>添加资源</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {[
+                { key: "上传", icon: "upload" },
+                { key: "从图库选择", icon: "library" },
+              ].map((item) => (
+                <button key={item.key} onClick={() => { setActiveSidebarPanel(null); showToast(`${item.key}（演示）`, "info"); }} style={{
+                  display: "flex", alignItems: "center", gap: 16, border: "none", background: "transparent", color: "#fff",
+                  cursor: "pointer", textAlign: "left",
+                }}>
+                  <div style={{
+                    width: 70, height: 70, borderRadius: 18, background: "rgba(255,255,255,0.06)",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    {item.icon === "upload" ? (
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 16V5" /><path d="M8 9l4-4 4 4" /><path d="M5 19h14" />
+                      </svg>
+                    ) : (
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="7" cy="14" r="3.5" />
+                        <path d="M9.5 11.5l4-4" />
+                        <path d="M13.5 7.5l3.5 6.5" />
+                        <path d="M17 14h-5.5" />
+                        <path d="M18.5 7.5l2.5 4.5h-5z" />
+                      </svg>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 24, fontWeight: 600 }}>{item.key}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 左侧弹层：团队工具箱 */}
         {activeSidebarPanel === "toolbox" && (
           <div className="fade-in" style={{
-            position: "absolute", left: 58, top: "50%", transform: "translateY(-50%)", zIndex: 36,
+            position: "absolute", left: 92, top: "50%", transform: "translateY(-50%)", zIndex: 36,
             width: 270, borderRadius: 12, overflow: "hidden", background: "rgba(31,31,31,0.96)",
             border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
           }}>
@@ -826,7 +965,7 @@ function CanvasPage() {
         {/* 左侧弹层：素材/主体（含团队入口） */}
         {activeSidebarPanel === "asset" && (
           <div className="fade-in" style={{
-            position: "absolute", left: 58, top: "50%", transform: "translateY(-50%)", zIndex: 36,
+            position: "absolute", left: 92, top: "50%", transform: "translateY(-50%)", zIndex: 36,
             width: 430, borderRadius: 12, overflow: "hidden", background: "rgba(31,31,31,0.96)",
             border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
           }}>
