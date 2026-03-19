@@ -593,6 +593,7 @@ function CanvasPage() {
   const [hoveredSidebar, setHoveredSidebar] = useState(null);
 
   const toolboxItems = toolboxTab === "mine" ? TOOLBOX_MINE : TOOLBOX_TEAM;
+  const visibleToolboxItems = toolboxSubTab === "myAsset" ? toolboxItems.slice(0, 1) : [];
   const panelAssets = buildMockAssets(assetTab);
   const styleAssets = buildMockAssets("style");
   const pickerAssets = buildMockAssets(assetPickerScope === "personal" ? "personalAsset" : "teamAsset");
@@ -937,23 +938,23 @@ function CanvasPage() {
         {/* 左侧弹层：团队工具箱 */}
         {activeSidebarPanel === "toolbox" && (
           <div className="fade-in" style={{
-            position: "absolute", left: 92, top: 22, zIndex: 36,
-            width: 840, height: 640, borderRadius: 22, overflow: "hidden", background: "rgba(37,37,37,0.98)",
-            border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 18px 56px rgba(0,0,0,0.5)",
+            position: "absolute", left: 112, top: 48, zIndex: 36,
+            width: 840, height: 620, borderRadius: 24, overflow: "hidden", background: "rgba(39,39,39,0.985)",
+            border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 18px 56px rgba(0,0,0,0.5)",
           }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ display: "flex", gap: 10 }}>
                 {[{ key: "mine", label: "我的模板库" }, { key: "team", label: "团队模板库" }].map((tab) => (
                   <button key={tab.key} onClick={() => setToolboxTab(tab.key)} style={{
-                    height: 56, padding: "0 22px", borderRadius: 16, border: "none", cursor: "pointer",
-                    background: toolboxTab === tab.key ? "rgba(255,255,255,0.10)" : "transparent",
-                    color: toolboxTab === tab.key ? "#F5F5F5" : "rgba(255,255,255,0.38)", fontSize: 18, fontWeight: 600,
+                    height: 58, padding: "0 22px", borderRadius: 18, border: "none", cursor: "pointer",
+                    background: toolboxTab === tab.key ? "rgba(255,255,255,0.09)" : "transparent",
+                    color: toolboxTab === tab.key ? "#F5F5F5" : "rgba(255,255,255,0.36)", fontSize: 19, fontWeight: 600,
                   }}>{tab.label}</button>
                 ))}
               </div>
-              <button onClick={() => setActiveSidebarPanel(null)} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.45)", cursor: "pointer", fontSize: 30, lineHeight: 1 }}>×</button>
+              <button onClick={() => setActiveSidebarPanel(null)} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.42)", cursor: "pointer", fontSize: 28, lineHeight: 1 }}>×</button>
             </div>
-            <div style={{ display: "flex", gap: 24, padding: "10px 26px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ display: "flex", gap: 26, padding: "10px 28px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               {[{ key: "myAsset", label: "我的素材" }, { key: "mySubject", label: "我的主体库" }].map((tab) => (
                 <button key={tab.key} onClick={() => setToolboxSubTab(tab.key)} style={{
                   border: "none", background: "transparent", cursor: "pointer",
@@ -964,31 +965,31 @@ function CanvasPage() {
                 </button>
               ))}
             </div>
-            <div style={{ display: "flex", gap: 18, padding: "20px 28px 8px" }}>
+            <div style={{ display: "flex", gap: 22, padding: "22px 28px 8px" }}>
               {["全部", "人物", "场景", "物品", "风格", "音效", "其他"].map((c) => (
                 <button key={c} onClick={() => setToolboxCategory(c)} style={{
-                  height: 42, padding: "0 18px", borderRadius: 14, border: "none", cursor: "pointer",
-                  background: toolboxCategory === c ? "rgba(255,255,255,0.10)" : "transparent",
-                  color: toolboxCategory === c ? "#F3F3F3" : "rgba(255,255,255,0.52)",
-                  fontSize: 16, fontWeight: 500,
+                  height: 44, padding: "0 18px", borderRadius: 14, border: "none", cursor: "pointer",
+                  background: toolboxCategory === c ? "rgba(255,255,255,0.09)" : "transparent",
+                  color: toolboxCategory === c ? "#F3F3F3" : "rgba(255,255,255,0.5)",
+                  fontSize: 15, fontWeight: 500,
                 }}>
                   {c}
                 </button>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, padding: "10px 28px 28px", maxHeight: 470, overflowY: "auto" }}>
-              {toolboxItems.map((item) => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 246px)", gap: 24, padding: "16px 28px 28px", maxHeight: 456, overflowY: "auto", alignContent: "start" }}>
+              {visibleToolboxItems.map((item) => (
                 <button key={item.id} onClick={() => useAsset(item.name)} style={{
                   border: "none", borderRadius: 16, background: "transparent", padding: 0, cursor: "pointer", textAlign: "left",
                 }}>
                   <div style={{
-                    width: "100%", aspectRatio: "1", borderRadius: 16, overflow: "hidden",
-                    background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.04)", marginBottom: 10,
+                    width: "246px", height: "246px", borderRadius: 16, overflow: "hidden",
+                    background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.04)", marginBottom: 12,
                   }}>
                     <img src={item.cover} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   </div>
                   <p style={{
-                    fontSize: 15, fontWeight: 500, color: "rgba(255,255,255,0.60)",
+                    fontSize: 16, fontWeight: 500, color: "rgba(255,255,255,0.58)",
                     whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                   }}>
                     {item.name}
