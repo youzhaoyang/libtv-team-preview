@@ -2594,14 +2594,28 @@ function TeamCenterPage() {
   const { setPage, showToast } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState("member");
   const [showPointSettingModal, setShowPointSettingModal] = useState(false);
+  const [transferAdminTarget, setTransferAdminTarget] = useState(null);
   const [batchPointValue, setBatchPointValue] = useState("1000");
-  const [memberLimits, setMemberLimits] = useState({
-    1: "1800",
-    2: "1800",
-    3: "1800",
-    4: "1800",
-    5: "1800",
-  });
+  const createEmptyMember = useCallback((id) => ({
+    id,
+    name: "暂无成员",
+    account: "-",
+    cost: "0",
+    limit: "1800",
+    role: "",
+    danger: false,
+    empty: true,
+  }), []);
+  const [teamMembers, setTeamMembers] = useState([
+    { id: 1, name: "果核里的宇宙_", account: "-", cost: "81", limit: "1800", role: "管理员", danger: false },
+    { id: 2, name: "Iam_prompt", account: "186****2068", cost: "7205", limit: "1800", role: "成员", danger: true },
+    { id: 3, name: "脆脆鲨", account: "137****0083", cost: "6891", limit: "1800", role: "成员", danger: true },
+    { id: 4, name: "B.rabbit", account: "-", cost: "-", limit: "1800", role: "成员", danger: true },
+    { id: 5, name: "Sahadev", account: "159****4214", cost: "-", limit: "1800", role: "成员", danger: true },
+    { id: 6, name: "暂无成员", account: "-", cost: "0", limit: "1800", role: "", danger: false, empty: true },
+    { id: 7, name: "暂无成员", account: "-", cost: "0", limit: "1800", role: "", danger: false, empty: true },
+    { id: 8, name: "暂无成员", account: "-", cost: "0", limit: "1800", role: "", danger: false, empty: true },
+  ]);
   const [memberPointValues, setMemberPointValues] = useState({
     1: "1000",
     2: "1000",
@@ -2609,19 +2623,15 @@ function TeamCenterPage() {
     4: "1000",
     5: "1000",
   });
-
-  const members = [
-    { id: 1, name: "果核里的宇宙_", account: "-", cost: "81", limit: "1800", role: "超管", danger: false },
-    { id: 2, name: "Iam_prompt", account: "186****2068", cost: "7205", limit: "1800", role: "转移管理局", danger: true },
-    { id: 3, name: "脆脆鲨", account: "137****0083", cost: "6891", limit: "1800", role: "转移管理局", danger: true },
-    { id: 4, name: "B.rabbit", account: "-", cost: "-", limit: "1800", role: "转移管理局", danger: true },
-    { id: 5, name: "Sahadev", account: "159****4214", cost: "-", limit: "1800", role: "转移管理局", danger: true },
-    { id: 6, name: "暂无成员", account: "-", cost: "0", limit: "1800", role: "", danger: false, empty: true },
-    { id: 7, name: "暂无成员", account: "-", cost: "0", limit: "1800", role: "", danger: false, empty: true },
-    { id: 8, name: "暂无成员", account: "-", cost: "0", limit: "1800", role: "", danger: false, empty: true },
-  ];
-  const activeMembers = members.filter((member) => !member.empty);
+  const activeMembers = teamMembers.filter((member) => !member.empty);
   const totalPoints = activeMembers.reduce((sum, member) => sum + Number(memberPointValues[member.id] || 0), 0);
+  const buildPointDraftFromMembers = useCallback((sourceMembers) => {
+    const next = {};
+    sourceMembers.filter((member) => !member.empty).forEach((member) => {
+      next[member.id] = member.limit || "0";
+    });
+    return next;
+  }, []);
 
   const applyBatchPoints = useCallback(() => {
     setMemberPointValues((prev) => {
@@ -2633,37 +2643,97 @@ function TeamCenterPage() {
     });
   }, [activeMembers, batchPointValue]);
   const openPointSettingModal = useCallback(() => {
-    setMemberPointValues(() => {
-      const next = {};
-      activeMembers.forEach((member) => {
-        next[member.id] = memberLimits[member.id] || member.limit || "0";
-      });
-      return next;
-    });
-    setBatchPointValue(memberLimits[activeMembers[0]?.id] || "1000");
+    setMemberPointValues(buildPointDraftFromMembers(teamMembers));
+    setBatchPointValue(activeMembers[0]?.limit || "1000");
     setShowPointSettingModal(true);
-  }, [activeMembers, memberLimits]);
-  const confirmPointSetting = useCallback(() => {
-    setMemberLimits((prev) => {
-      const next = { ...prev };
-      activeMembers.forEach((member) => {
-        next[member.id] = memberPointValues[member.id] || "0";
-      });
+  }, [activeMembers, buildPointDraftFromMembers, teamMembers]);
+  useEffect(() => {
+    if (!showPointSettingModal) {
+      setMemberPointValues(buildPointDraftFromMembers(teamMembers));
+    }
+  }, [buildPointDraftFromMembers, showPointSettingModal, teamMembers]);
+  const openTransferAdminModal = useCallback((member) => {
+    setTransferAdminTarget(member);
+  }, []);
+  const closeTransferAdminModal = useCallback(() => {
+    setTransferAdminTarget(null);
+  }, []);
+  const transferAdmin = useCallback((targetId) => {
+    setTeamMembers((prev) => prev.map((member) => {
+      if (member.empty) return member;
+      if (member.id === targetId) return { ...member, role: "管理员" };
+      return { ...member, role: "成员" };
+    }));
+    setTransferAdminTarget(null);
+    showToast("管理员已转移", "success");
+  }, [showToast]);
+  const removeMember = useCallback((targetId) => {
+    setTeamMembers((prev) => {
+      const target = prev.find((member) => member.id === targetId);
+      if (!target || target.empty) return prev;
+
+      const next = prev.map((member) => (
+        member.id === targetId ? createEmptyMember(member.id) : member
+      ));
+      const hasAdmin = next.some((member) => !member.empty && member.role === "管理员");
+      if (!hasAdmin) {
+        const nextAdmin = next.find((member) => !member.empty);
+        if (nextAdmin) {
+          return next.map((member) => (
+            member.id === nextAdmin.id ? { ...member, role: "管理员" } : member
+          ));
+        }
+      }
       return next;
     });
+    setMemberPointValues((prev) => {
+      const next = { ...prev };
+      delete next[targetId];
+      return next;
+    });
+    showToast("成员已删除", "success");
+  }, [createEmptyMember, showToast]);
+  const confirmPointSetting = useCallback(() => {
+    const nextMembers = teamMembers.map((member) => (
+      member.empty
+        ? member
+        : { ...member, limit: memberPointValues[member.id] || "0" }
+    ));
+    setTeamMembers(nextMembers);
+    setMemberPointValues(buildPointDraftFromMembers(nextMembers));
+    setBatchPointValue(nextMembers.find((member) => !member.empty)?.limit || "1000");
     setShowPointSettingModal(false);
-    showToast("积分设置已保存（演示）", "success");
-  }, [activeMembers, memberPointValues, showToast]);
+    showToast("积分设置已保存", "success");
+  }, [buildPointDraftFromMembers, memberPointValues, showToast, teamMembers]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#F7F8FA", color: "#1F2329" }}>
       <div style={{ maxWidth: 1380, margin: "0 auto", padding: "20px 24px 40px" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 }}>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              <button onClick={() => setPage("canvas")} style={{
-                border: "none", background: "transparent", cursor: "pointer", color: "#4E5969", fontSize: 13,
-              }}>← 返回</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+              <button
+                onClick={() => setPage("canvas")}
+                style={{
+                  height: 32, padding: "0 12px", borderRadius: 8, border: "1px solid #E5E6EB",
+                  background: "#fff", cursor: "pointer", color: "#4E5969", fontSize: 13, fontWeight: 500,
+                  display: "inline-flex", alignItems: "center", gap: 6, boxShadow: "0 1px 2px rgba(16,24,40,0.04)",
+                  transition: "all 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#F7F8FA";
+                  e.currentTarget.style.borderColor = "#C9CDD4";
+                  e.currentTarget.style.color = "#1D2129";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#fff";
+                  e.currentTarget.style.borderColor = "#E5E6EB";
+                  e.currentTarget.style.color = "#4E5969";
+                }}
+              >
+                <span style={{ fontSize: 14, lineHeight: 1 }}>←</span>
+                <span>返回</span>
+              </button>
               <span style={{ fontSize: 24, fontWeight: 700, color: "#1D2129" }}>迷途的果核</span>
               <span style={{ fontSize: 15, color: "#86909C" }}>✎</span>
             </div>
@@ -2719,18 +2789,19 @@ function TeamCenterPage() {
           {activeTab === "member" ? (
             <div>
               <div style={{
-                display: "grid", gridTemplateColumns: "1.5fr 1.5fr 1.2fr 1.1fr 1fr",
+                display: "grid", gridTemplateColumns: "1.5fr 1.4fr 0.9fr 1.1fr 1.1fr 1fr",
                 padding: "14px 22px", background: "#FAFBFC", color: "#4E5969", fontSize: 13, fontWeight: 600,
               }}>
-                <div>成员 (5/14)</div>
+                <div>成员 ({activeMembers.length}/14)</div>
                 <div>账号</div>
+                <div>角色</div>
                 <div>本周期积分消耗</div>
                 <div>积分消耗上限</div>
                 <div style={{ textAlign: "right" }}>操作</div>
               </div>
-              {members.map((member) => (
+              {teamMembers.map((member) => (
                 <div key={member.id} style={{
-                  display: "grid", gridTemplateColumns: "1.5fr 1.5fr 1.2fr 1.1fr 1fr",
+                  display: "grid", gridTemplateColumns: "1.5fr 1.4fr 0.9fr 1.1fr 1.1fr 1fr",
                   padding: "18px 22px", alignItems: "center", borderTop: "1px solid #F2F3F5",
                   fontSize: 13, color: member.empty ? "#C9CDD4" : "#4E5969", background: member.id === 1 ? "#FCFCFD" : "#fff",
                 }}>
@@ -2743,22 +2814,40 @@ function TeamCenterPage() {
                     <span>{member.name}</span>
                   </div>
                   <div>{member.account}</div>
+                  <div>
+                    {member.role ? (
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", justifyContent: "center",
+                        minWidth: member.role === "管理员" ? 56 : 44, height: 28, padding: "0 10px",
+                        borderRadius: 999, fontSize: 12, fontWeight: 600,
+                        background: member.role === "管理员" ? "#FFF2E8" : "#F2F3F5",
+                        color: member.role === "管理员" ? "#FA541C" : "#4E5969",
+                        border: member.role === "管理员" ? "1px solid #FFD8BF" : "1px solid #E5E6EB",
+                      }}>
+                        {member.role}
+                      </span>
+                    ) : (
+                      <span style={{ color: "#E5E6EB" }}>-</span>
+                    )}
+                  </div>
                   <div>{member.cost}</div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: member.empty ? "#E5E6EB" : "#1D2129", lineHeight: 1.4 }}>
-                    {member.empty ? member.limit : (memberLimits[member.id] || member.limit)}
+                    {member.limit}
                   </div>
                   <div style={{ textAlign: "right" }}>
                     {member.role ? (
                       <>
-                        <button onClick={() => showToast(`${member.role}（演示）`, "info")} style={{
-                          border: "none", background: "transparent", cursor: "pointer", color: "#86909C", fontSize: 13, marginRight: 12,
-                        }}>{member.role}</button>
-                        <button onClick={() => showToast("解绑（演示）", "warning")} style={{
+                        {member.role === "成员" && (
+                          <button onClick={() => openTransferAdminModal(member)} style={{
+                            border: "none", background: "transparent", cursor: "pointer", color: "#86909C", fontSize: 13, marginRight: 12,
+                          }}>转移管理员</button>
+                        )}
+                        <button onClick={() => removeMember(member.id)} style={{
                           border: "none", background: "transparent", cursor: "pointer", color: member.danger ? "#F53F3F" : "#C9CDD4", fontSize: 13,
-                        }}>解绑</button>
+                        }}>删除</button>
                       </>
                     ) : (
-                      <span style={{ color: "#E5E6EB" }}>解绑</span>
+                      <span style={{ color: "#E5E6EB" }}>删除</span>
                     )}
                   </div>
                 </div>
@@ -2852,6 +2941,54 @@ function TeamCenterPage() {
                   height: 56, borderRadius: 18, border: "none", cursor: "pointer",
                   background: "#111", color: "#fff", fontSize: 16, fontWeight: 600,
                 }}>确定</button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {transferAdminTarget && (
+        <>
+          <div onClick={closeTransferAdminModal} style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.34)", zIndex: 190,
+          }} />
+          <div className="fade-in" style={{
+            position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
+            width: 832, zIndex: 191, borderRadius: 18, background: "#fff",
+            boxShadow: "0 22px 72px rgba(0,0,0,0.22)", border: "1px solid rgba(17,17,17,0.08)",
+            padding: "42px 46px 38px",
+          }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 24 }}>
+              <div style={{
+                width: 38, height: 38, borderRadius: "50%", flexShrink: 0,
+                background: "#FFB21A", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 26, fontWeight: 500, lineHeight: 1,
+              }}>!</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: "#2B2F36", lineHeight: 1.35 }}>
+                  确定要转移管理员权限吗?
+                </div>
+                <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", color: "#2B2F36" }}>
+                  <span style={{ fontSize: 20, fontWeight: 700 }}>将管理员权限转移给</span>
+                  <div style={{
+                    width: 26, height: 26, borderRadius: "50%",
+                    background: `url(https://picsum.photos/seed/team-member-${transferAdminTarget.id}/56/56) center/cover no-repeat`,
+                    border: "1px solid #EEF0F3", flexShrink: 0,
+                  }} />
+                  <span style={{ fontSize: 20, fontWeight: 700 }}>{transferAdminTarget.name}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 16, marginTop: 34 }}>
+                  <button onClick={closeTransferAdminModal} style={{
+                    minWidth: 126, height: 62, borderRadius: 14, cursor: "pointer",
+                    border: "1px solid #D9DDE3", background: "#fff", color: "#2B2F36",
+                    fontSize: 20, fontWeight: 500, boxShadow: "0 2px 6px rgba(16,24,40,0.08)",
+                  }}>取消</button>
+                  <button onClick={() => transferAdmin(transferAdminTarget.id)} style={{
+                    minWidth: 126, height: 62, borderRadius: 14, cursor: "pointer",
+                    border: "none", background: "#1677FF", color: "#fff",
+                    fontSize: 20, fontWeight: 600, boxShadow: "0 8px 18px rgba(22,119,255,0.28)",
+                  }}>确定</button>
+                </div>
               </div>
             </div>
           </div>
