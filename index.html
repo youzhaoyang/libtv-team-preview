@@ -584,7 +584,8 @@ function CanvasPage() {
   const [toolboxTab, setToolboxTab] = useState("mine");
   const [toolboxSubTab, setToolboxSubTab] = useState("myAsset");
   const [toolboxCategory, setToolboxCategory] = useState("全部");
-  const [assetTab, setAssetTab] = useState("myAsset");
+  const [assetScopeTab, setAssetScopeTab] = useState("mine");
+  const [assetSubTab, setAssetSubTab] = useState("asset");
   const [assetCategory, setAssetCategory] = useState("全部");
   const [showStyleLibrary, setShowStyleLibrary] = useState(false);
   const [showTeamAssetHub, setShowTeamAssetHub] = useState(false);
@@ -594,7 +595,7 @@ function CanvasPage() {
 
   const toolboxItems = toolboxTab === "mine" ? TOOLBOX_MINE : TOOLBOX_TEAM;
   const visibleToolboxItems = toolboxSubTab === "myAsset" ? toolboxItems.slice(0, 1) : [];
-  const panelAssets = buildMockAssets(assetTab);
+  const panelAssets = buildMockAssets(`${assetScopeTab}-${assetSubTab}`);
   const styleAssets = buildMockAssets("style");
   const pickerAssets = buildMockAssets(assetPickerScope === "personal" ? "personalAsset" : "teamAsset");
 
@@ -1003,53 +1004,71 @@ function CanvasPage() {
         {/* 左侧弹层：素材/主体（含团队入口） */}
         {activeSidebarPanel === "asset" && (
           <div className="fade-in" style={{
-            position: "absolute", left: 92, top: "50%", transform: "translateY(-50%)", zIndex: 36,
-            width: 430, borderRadius: 12, overflow: "hidden", background: "rgba(31,31,31,0.96)",
-            border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
+            position: "absolute", left: 112, top: 48, zIndex: 36,
+            width: 840, height: 620, borderRadius: 24, overflow: "hidden", background: "rgba(39,39,39,0.985)",
+            border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 18px 56px rgba(0,0,0,0.5)",
           }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <div style={{ display: "flex", gap: 2 }}>
-                {[
-                  { key: "myAsset", label: "我的素材" },
-                  { key: "mySubject", label: "我的主体库" },
-                  { key: "teamAsset", label: "团队素材" },
-                  { key: "teamSubject", label: "团队主体库" },
-                ].map((tab) => (
-                  <button key={tab.key} onClick={() => setAssetTab(tab.key)} style={{
-                    height: 28, padding: "0 8px", borderRadius: 8, border: "none", cursor: "pointer",
-                    background: assetTab === tab.key ? "rgba(255,255,255,0.12)" : "transparent",
-                    color: assetTab === tab.key ? "#fff" : "rgba(255,255,255,0.52)", fontSize: 12,
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ display: "flex", gap: 10 }}>
+                {[{ key: "mine", label: "我的素材" }, { key: "team", label: "团队素材" }].map((tab) => (
+                  <button key={tab.key} onClick={() => setAssetScopeTab(tab.key)} style={{
+                    height: 58, padding: "0 22px", borderRadius: 18, border: "none", cursor: "pointer",
+                    background: assetScopeTab === tab.key ? "rgba(255,255,255,0.09)" : "transparent",
+                    color: assetScopeTab === tab.key ? "#F5F5F5" : "rgba(255,255,255,0.36)", fontSize: 19, fontWeight: 600,
                   }}>{tab.label}</button>
                 ))}
               </div>
-              <button onClick={() => setActiveSidebarPanel(null)} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 16 }}>×</button>
+              <button onClick={() => setActiveSidebarPanel(null)} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.42)", cursor: "pointer", fontSize: 28, lineHeight: 1 }}>×</button>
             </div>
-            <div style={{ display: "flex", gap: 8, padding: "8px 10px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              {ASSET_CATEGORY.map((c) => (
+            <div style={{ display: "flex", gap: 26, padding: "10px 28px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              {[
+                { key: "asset", label: assetScopeTab === "mine" ? "我的素材" : "团队素材" },
+                { key: "subject", label: assetScopeTab === "mine" ? "我的主体库" : "团队主体库" },
+              ].map((tab) => (
+                <button key={tab.key} onClick={() => setAssetSubTab(tab.key)} style={{
+                  border: "none", background: "transparent", cursor: "pointer",
+                  color: assetSubTab === tab.key ? "#F3F3F3" : "rgba(255,255,255,0.42)",
+                  fontSize: 18, fontWeight: 600, padding: 0,
+                }}>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 22, padding: "22px 28px 8px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+              {["全部", "人物", "场景", "物品", "风格", "音效", "其他"].map((c) => (
                 <button key={c} onClick={() => setAssetCategory(c)} style={{
-                  height: 24, padding: "0 8px", borderRadius: 6, border: "none", cursor: "pointer",
-                  background: assetCategory === c ? "rgba(255,255,255,0.12)" : "transparent",
-                  color: assetCategory === c ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.45)", fontSize: 11,
+                  height: 44, padding: "0 18px", borderRadius: 14, border: "none", cursor: "pointer",
+                  background: assetCategory === c ? "rgba(255,255,255,0.09)" : "transparent",
+                  color: assetCategory === c ? "#F3F3F3" : "rgba(255,255,255,0.5)",
+                  fontSize: 15, fontWeight: 500,
                 }}>{c}</button>
               ))}
-              <button onClick={() => setShowStyleLibrary(true)} style={{
-                marginLeft: "auto", height: 24, padding: "0 8px", borderRadius: 6, border: "none", cursor: "pointer",
-                background: "rgba(244,63,94,0.18)", color: "#F43F5E", fontSize: 11,
-              }}>团队风格库</button>
-              <button onClick={() => setShowTeamAssetHub(true)} style={{
-                height: 24, padding: "0 8px", borderRadius: 6, border: "none", cursor: "pointer",
-                background: "rgba(59,130,246,0.18)", color: "#60A5FA", fontSize: 11,
-              }}>团队资产库</button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, padding: 10, maxHeight: 300, overflowY: "auto" }}>
-              {panelAssets.map((asset) => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 246px)", gap: 24, padding: "16px 28px 28px", maxHeight: 456, overflowY: "auto", alignContent: "start" }}>
+              {panelAssets.slice(0, 1).map((asset) => (
                 <div key={asset.id} onClick={() => useAsset(asset.name)} style={{ cursor: "pointer" }}>
-                  <div style={{ borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", background: "#222" }}>
-                    <img src={asset.cover} alt="" style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} />
+                  <div style={{
+                    width: "246px", height: "246px", borderRadius: 16, overflow: "hidden",
+                    background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.04)", marginBottom: 12,
+                  }}>
+                    <img src={asset.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   </div>
-                  <p style={{ marginTop: 4, fontSize: 11, color: "rgba(255,255,255,0.55)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{asset.name}</p>
+                  <p style={{
+                    fontSize: 16, fontWeight: 500, color: "rgba(255,255,255,0.58)",
+                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                  }}>{assetSubTab === "asset" ? "视频素材" : "人物主体"}</p>
                 </div>
               ))}
+            </div>
+            <div style={{ position: "absolute", right: 18, top: 142, display: "flex", gap: 8 }}>
+              <button onClick={() => setShowStyleLibrary(true)} style={{
+                height: 28, padding: "0 10px", borderRadius: 8, border: "none", cursor: "pointer",
+                background: "rgba(244,63,94,0.18)", color: "#F43F5E", fontSize: 12,
+              }}>团队风格库</button>
+              <button onClick={() => setShowTeamAssetHub(true)} style={{
+                height: 28, padding: "0 10px", borderRadius: 8, border: "none", cursor: "pointer",
+                background: "rgba(59,130,246,0.18)", color: "#60A5FA", fontSize: 12,
+              }}>团队资产库</button>
             </div>
           </div>
         )}
