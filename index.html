@@ -77,6 +77,33 @@ const INITIAL_TEAM_FOLDERS = [
 ];
 const LIBRARY_CARD_HEIGHT = 231;
 const LIBRARY_CARD_MEDIA_HEIGHT = 160;
+const HOME_HERO_BANNERS = [
+  {
+    id: "hero-1",
+    title: "WORKFLOW\nTEMPLATES",
+    subtitle: "TV 工具箱",
+    cover: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    id: "hero-2",
+    title: "LibTV正式上线",
+    subtitle: "300 条 KLING 3 系列免费生成",
+    cover: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    id: "hero-3",
+    title: "灵打光",
+    subtitle: "打造电影级角色氛围",
+    cover: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80",
+  },
+];
+const HOME_SHOW_TAGS = ["全部", "精选宣布", "商业广告", "专业影棚", "剧情导演", "教育速写", "TV工具流"];
+const HOME_SHOW_ASSETS = [
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=900&q=80",
+];
 
 const ONLINE_USERS = [
   { id: "u1", name: "我", avatar: "👤", color: COLLABORATOR_COLORS[0] },
@@ -396,6 +423,176 @@ const FolderCard = memo(function FolderCard({ folder, itemCount, menuItems, onCl
   );
 });
 
+const HomeRecentCard = memo(function HomeRecentCard({ project, onClick, isCreate = false }) {
+  return (
+    <button onClick={onClick} style={{
+      border: "none", background: "transparent", padding: 0, cursor: "pointer", textAlign: "left",
+      width: "100%",
+    }}>
+      <div style={{
+        borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)", background: "#181818",
+        padding: 8, minHeight: 120, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+      }}>
+        <div style={{
+          height: 84, borderRadius: 10, overflow: "hidden", background: isCreate
+            ? "linear-gradient(124deg, rgba(172,188,202,0.18) 30.75%, rgba(14,43,83,0.18) 99.42%), linear-gradient(180deg, #000 0%, #171717 100%)"
+            : "#101010",
+          border: isCreate ? "1px solid rgba(255,255,255,0.16)" : "1px solid rgba(255,255,255,0.05)",
+          display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
+        }}>
+          {isCreate ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+              <span style={{
+                width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.9)", color: "#111",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 700,
+              }}>+</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>开始创作</span>
+            </div>
+          ) : (
+            <img src={project.cover} alt={project.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          )}
+        </div>
+        <div style={{ padding: "8px 2px 0" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "#F3F3F3", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {isCreate ? "创建新的视频项目" : project.name}
+          </div>
+          <div style={{ marginTop: 4, fontSize: 10, color: "rgba(255,255,255,0.34)" }}>
+            {isCreate ? "" : project.date}
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+});
+
+function HomePage() {
+  const { setPage, openCanvas } = useContext(AppContext);
+  const recentProjects = [INITIAL_PERSONAL[1], INITIAL_PERSONAL[0], INITIAL_TEAM[0], INITIAL_TEAM[1]];
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#000", color: "#fff" }}>
+      <div style={{
+        height: 28, background: "#64D2F3", color: "#0B2028", display: "flex",
+        alignItems: "center", justifyContent: "center", gap: 12, fontSize: 11, fontWeight: 500,
+      }}>
+        <span style={{
+          height: 18, padding: "0 8px", borderRadius: 999, background: "rgba(11,32,40,0.14)",
+          display: "inline-flex", alignItems: "center",
+        }}>K 活动剩余 6天</span>
+        <span>会员特惠狂欢周，LibTV 正式上线，尊享版年包最高享 <strong>300</strong> 条 KLING 3 系列免费生成</span>
+        <button style={{
+          height: 18, padding: "0 8px", borderRadius: 999, border: "none", background: "#E8FAFF",
+          color: "#0B2028", fontSize: 11, cursor: "pointer",
+        }}>立即购买</button>
+        <span style={{ marginLeft: 6, opacity: 0.7, cursor: "pointer" }}>×</span>
+      </div>
+      <header style={{
+        height: 56, display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 24px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize: 18, fontWeight: 800 }}>LibTV</span>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.68)" }}>宝匣的主场 - 脚本</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button style={{
+            height: 34, padding: "0 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)",
+            background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.82)", fontSize: 12, cursor: "pointer",
+          }}>LibTV Skills</button>
+          <button style={{ width: 34, height: 34, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#fff", cursor: "pointer" }}>↗</button>
+          <button style={{ width: 34, height: 34, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#fff", cursor: "pointer" }}>🔔</button>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8, height: 36, padding: "0 10px",
+            borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)",
+          }}>
+            <span style={{ fontSize: 12, color: "#F6C453" }}>⚡</span>
+            <span style={{ fontSize: 12, color: "#F7D26A", fontWeight: 700 }}>77,209</span>
+            <div style={{ width: 24, height: 24, borderRadius: "50%", background: "linear-gradient(135deg, #3B82F6, #8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>U</div>
+          </div>
+        </div>
+      </header>
+
+      <main style={{ maxWidth: 1320, margin: "0 auto", padding: "24px 24px 40px" }}>
+        <div style={{ display: "flex", gap: 16, alignItems: "stretch" }}>
+          {HOME_HERO_BANNERS.map((banner, index) => (
+            <button key={banner.id} style={{
+              border: "none", cursor: "pointer", padding: 0, textAlign: "left",
+              borderRadius: 20, overflow: "hidden", position: "relative",
+              flex: index === 1 ? 1.2 : 0.9, minHeight: index === 1 ? 194 : 160,
+              background: "#111", boxShadow: index === 1 ? "0 0 0 1px rgba(255,255,255,0.06)" : "none",
+            }}>
+              <img src={banner.cover} alt={banner.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.92 }} />
+              <div style={{
+                position: "absolute", inset: 0,
+                background: index === 1
+                  ? "linear-gradient(180deg, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.38) 100%)"
+                  : "linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.45) 100%)",
+              }} />
+              <div style={{ position: "absolute", inset: 0, padding: index === 1 ? 26 : 20, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                <div style={{ fontSize: index === 1 ? 22 : 15, fontWeight: 800, whiteSpace: "pre-line", lineHeight: 1.12 }}>{banner.title}</div>
+                <div style={{ marginTop: 6, fontSize: index === 1 ? 13 : 12, color: "rgba(255,255,255,0.78)" }}>{banner.subtitle}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 12 }}>
+          {[0, 1, 2].map((idx) => (
+            <div key={idx} style={{ width: idx === 1 ? 20 : 8, height: 4, borderRadius: 999, background: idx === 1 ? "#fff" : "rgba(255,255,255,0.28)" }} />
+          ))}
+        </div>
+
+        <section style={{ marginTop: 32 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>最近项目</h2>
+            <button onClick={() => setPage("list")} style={{
+              border: "none", background: "transparent", cursor: "pointer", color: "rgba(255,255,255,0.62)", fontSize: 13,
+            }}>全部项目 ›</button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 16 }}>
+            <HomeRecentCard isCreate onClick={() => openCanvas("blank")} />
+            {recentProjects.map((project) => (
+              <HomeRecentCard key={project.id} project={project} onClick={() => openCanvas("default")} />
+            ))}
+          </div>
+        </section>
+
+        <section style={{ marginTop: 36 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>TV Show</h2>
+            <div style={{
+              width: 244, height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", padding: "0 14px",
+              color: "rgba(255,255,255,0.34)", fontSize: 12,
+            }}>
+              输入搜索内容
+              <span style={{ marginLeft: "auto" }}>🔍</span>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
+            {HOME_SHOW_TAGS.map((tag, index) => (
+              <button key={tag} style={{
+                height: 28, padding: "0 12px", borderRadius: 999, border: "none", cursor: "pointer",
+                background: index === 0 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.04)",
+                color: index === 0 ? "#fff" : "rgba(255,255,255,0.58)", fontSize: 12,
+              }}>{tag}</button>
+            ))}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 16 }}>
+            {HOME_SHOW_ASSETS.map((cover, index) => (
+              <div key={cover} style={{ cursor: "pointer" }}>
+                <div style={{ aspectRatio: "1/1", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)", background: "#141414" }}>
+                  <img src={cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                </div>
+                <div style={{ marginTop: 8, fontSize: 12, color: "rgba(255,255,255,0.72)" }}>专题模板 {index + 1}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
 // ============================================================
 // 页面一：项目列表（US-01 + US-02）
 // ============================================================
@@ -411,6 +608,7 @@ function ProjectListPage() {
   const [editingFolderId, setEditingFolderId] = useState(null);
   const [editingFolderName, setEditingFolderName] = useState("");
   const [migrateTarget, setMigrateTarget] = useState(null);
+  const [migrateDirection, setMigrateDirection] = useState("toTeam");
   const [modalOpen, setModalOpen] = useState(false);
   const [moveTarget, setMoveTarget] = useState(null);
   const [moveModalOpen, setMoveModalOpen] = useState(false);
@@ -418,19 +616,27 @@ function ProjectListPage() {
   const [showUserHoverCard, setShowUserHoverCard] = useState(false);
   const userHoverHideTimerRef = useRef(null);
 
-  const handleMigrate = useCallback((project) => {
+  const handleMigrate = useCallback((project, direction = "toTeam") => {
     setMigrateTarget(project);
+    setMigrateDirection(direction);
     setModalOpen(true);
   }, []);
 
   const confirmMigrate = useCallback(() => {
     if (!migrateTarget) return;
-    setPersonalProjects((prev) => prev.filter((p) => p.id !== migrateTarget.id));
-    setTeamProjects((prev) => [{ ...migrateTarget, id: `t-migrated-${migrateTarget.id}` }, ...prev]);
+    if (migrateDirection === "toTeam") {
+      setPersonalProjects((prev) => prev.filter((p) => p.id !== migrateTarget.id));
+      setTeamProjects((prev) => [{ ...migrateTarget, id: `t-migrated-${migrateTarget.id}`, folderId: null }, ...prev]);
+      showToast("项目已移动至团队空间", "success");
+    } else {
+      setTeamProjects((prev) => prev.filter((p) => p.id !== migrateTarget.id));
+      setPersonalProjects((prev) => [{ ...migrateTarget, id: `p-migrated-${migrateTarget.id}`, folderId: null }, ...prev]);
+      showToast("项目已移动至个人项目", "success");
+    }
     setModalOpen(false);
     setMigrateTarget(null);
-    showToast("项目已移动至团队空间", "success");
-  }, [migrateTarget, showToast]);
+    setMigrateDirection("toTeam");
+  }, [migrateDirection, migrateTarget, showToast]);
   const handleCreateFolder = useCallback(() => {
     const nextFolder = {
       id: `${activeTab === "personal" ? "pf" : "tf"}-${Date.now()}`,
@@ -519,7 +725,7 @@ function ProjectListPage() {
   const getPersonalMenuItems = useCallback((project) => [
     { label: "打开", onClick: () => openCanvas("default") },
     { label: "重命名", onClick: () => showToast("重命名功能（演示）", "info") },
-    { label: "移动至团队", onClick: () => handleMigrate(project) },
+    { label: "移动至团队", onClick: () => handleMigrate(project, "toTeam") },
     { label: "移动至文件夹", onClick: () => handleOpenMoveModal(project) },
     { label: "删除项目", danger: true, onClick: () => {
       setPersonalProjects((prev) => prev.filter((p) => p.id !== project.id));
@@ -530,6 +736,7 @@ function ProjectListPage() {
   const getTeamMenuItems = useCallback((project) => [
     { label: "打开", onClick: () => openCanvas("default") },
     { label: "重命名", onClick: () => showToast("重命名功能（演示）", "info") },
+    { label: "移动至个人项目", onClick: () => handleMigrate(project, "toPersonal") },
     { label: "移动至文件夹", onClick: () => handleOpenMoveModal(project) },
     { label: "删除项目", danger: true, onClick: () => {
       setTeamProjects((prev) => prev.filter((p) => p.id !== project.id));
@@ -686,10 +893,12 @@ function ProjectListPage() {
       <Modal opened={modalOpen} onClose={() => setModalOpen(false)}>
         <div style={{ marginBottom: 16 }}>
           <p style={{ fontSize: 15, fontWeight: 600, color: "#fff", marginBottom: 12 }}>
-            移动至「{TEAM_NAME}」
+            {migrateDirection === "toTeam" ? `移动至「${TEAM_NAME}」` : "移动至「个人项目」"}
           </p>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>
-            将项目转移至团队进行协作，你可以在"团队项目"中访问
+            {migrateDirection === "toTeam"
+              ? '将项目转移至团队进行协作，你可以在"团队项目"中访问'
+              : '将项目转移回个人空间后，你可以在"个人"项目中继续编辑和管理'}
           </p>
         </div>
         <div style={{
@@ -697,7 +906,9 @@ function ProjectListPage() {
           border: "1px solid rgba(245,158,11,0.2)", marginBottom: 20,
         }}>
           <p style={{ fontSize: 12, color: "#F59E0B", lineHeight: 1.5 }}>
-            ⚠ 此操作不可逆。移动后项目将从个人空间消失，所有团队成员默认获得编辑权限。
+            {migrateDirection === "toTeam"
+              ? "⚠ 此操作不可逆。移动后项目将从个人空间消失，所有团队成员默认获得编辑权限。"
+              : "⚠ 移动后项目将从团队项目中移除，并回到个人项目列表中。"}
           </p>
         </div>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
@@ -716,7 +927,7 @@ function ProjectListPage() {
           }}
             onMouseEnter={(e) => e.currentTarget.style.background = "#2563EB"}
             onMouseLeave={(e) => e.currentTarget.style.background = "#3B82F6"}
-          >移动到团队</button>
+          >{migrateDirection === "toTeam" ? "移动到团队" : "移动到个人"}</button>
         </div>
       </Modal>
 
@@ -1612,37 +1823,43 @@ function CanvasPage() {
         {activeSidebarPanel === "toolbox" && (
           <div className="fade-in" style={{
             position: "absolute", left: 74, top: 168, zIndex: 36,
-            width: 286, borderRadius: 12, overflow: "hidden", background: "rgba(31,31,31,0.985)",
-            border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 14px 34px rgba(0,0,0,0.34)",
+            width: 398, borderRadius: 14, overflow: "hidden", background: "rgba(31,31,31,0.985)",
+            border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 18px 42px rgba(0,0,0,0.38)",
           }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 10px 8px" }}>
-              <div style={{ display: "flex", gap: 6 }}>
-                {[{ key: "mine", label: "我的工具箱" }, { key: "team", label: "团队工具箱" }].map((tab) => (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 12px 10px" }}>
+              <div style={{
+                flex: 1, display: "inline-flex", alignItems: "center", gap: 4, padding: 4,
+                borderRadius: 999, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                {[{ key: "mine", label: "个人工具箱" }, { key: "team", label: "团队工具箱" }].map((tab) => (
                   <button key={tab.key} onClick={() => setToolboxTab(tab.key)} style={{
-                    height: 22, padding: "0 8px", borderRadius: 6, border: "none", cursor: "pointer",
-                    background: toolboxTab === tab.key ? "rgba(255,255,255,0.08)" : "transparent",
-                    color: toolboxTab === tab.key ? "#F5F5F5" : "rgba(255,255,255,0.40)", fontSize: 10, fontWeight: 500,
+                    flex: 1, height: 28, padding: "0 10px", borderRadius: 999, border: "none", cursor: "pointer",
+                    background: toolboxTab === tab.key ? "rgba(255,255,255,0.12)" : "transparent",
+                    color: toolboxTab === tab.key ? "#F5F5F5" : "rgba(255,255,255,0.42)", fontSize: 12, fontWeight: 600,
                   }}>{tab.label}</button>
                 ))}
               </div>
-              <button onClick={() => setActiveSidebarPanel(null)} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.42)", cursor: "pointer", fontSize: 14, lineHeight: 1 }}>×</button>
+              <button onClick={() => setActiveSidebarPanel(null)} style={{
+                width: 24, height: 24, flexShrink: 0, border: "none", background: "transparent",
+                color: "rgba(255,255,255,0.42)", cursor: "pointer", fontSize: 15, lineHeight: 1,
+              }}>×</button>
             </div>
             <div style={{
-              display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8,
-              padding: "6px 10px 10px", alignContent: "start",
+              display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10,
+              padding: "8px 12px 14px", alignContent: "start",
             }}>
               {visibleToolboxItems.map((item) => (
                 <button key={item.id} onClick={() => { useAsset(item.name); setActiveSidebarPanel(null); }} style={{
-                  border: "none", borderRadius: 8, background: "transparent", padding: 0, cursor: "pointer", textAlign: "left",
+                  border: "none", borderRadius: 10, background: "transparent", padding: 0, cursor: "pointer", textAlign: "left",
                 }}>
                   <div style={{
-                    width: "100%", aspectRatio: "1/1", borderRadius: 8, overflow: "hidden",
-                    background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.04)", marginBottom: 5,
+                    width: "100%", aspectRatio: "1/1", borderRadius: 10, overflow: "hidden",
+                    background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.04)", marginBottom: 7,
                   }}>
                     <img src={item.cover} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   </div>
                   <p style={{
-                    fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.58)", lineHeight: 1.3,
+                    fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.58)", lineHeight: 1.35,
                     whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                   }}>
                     {item.name}
@@ -1656,23 +1873,26 @@ function CanvasPage() {
         {/* 左侧弹层：素材/主体（含团队入口） */}
         {activeSidebarPanel === "asset" && (
           <div className="fade-in" style={{
-            position: "absolute", left: 112, top: 48, zIndex: 36,
-            width: 840, borderRadius: 24, overflow: "hidden", background: "rgba(39,39,39,0.985)",
-            border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 18px 56px rgba(0,0,0,0.5)",
+            position: "absolute", left: 74, top: 60, zIndex: 36,
+            width: 500, borderRadius: 18, overflow: "hidden", background: "rgba(39,39,39,0.985)",
+            border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 16px 42px rgba(0,0,0,0.42)",
           }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{
+                display: "inline-flex", gap: 4, padding: 4, borderRadius: 999,
+                background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.06)",
+              }}>
                 {[{ key: "mine", label: "我的素材" }, { key: "team", label: "团队素材" }].map((tab) => (
                   <button key={tab.key} onClick={() => setAssetScopeTab(tab.key)} style={{
-                    height: 58, padding: "0 22px", borderRadius: 18, border: "none", cursor: "pointer",
-                    background: assetScopeTab === tab.key ? "rgba(255,255,255,0.09)" : "transparent",
-                    color: assetScopeTab === tab.key ? "#F5F5F5" : "rgba(255,255,255,0.36)", fontSize: 19, fontWeight: 600,
+                    height: 26, padding: "0 12px", borderRadius: 999, border: "none", cursor: "pointer",
+                    background: assetScopeTab === tab.key ? "rgba(255,255,255,0.12)" : "transparent",
+                    color: assetScopeTab === tab.key ? "#F5F5F5" : "rgba(255,255,255,0.42)", fontSize: 12, fontWeight: 600,
                   }}>{tab.label}</button>
                 ))}
               </div>
-              <button onClick={() => setActiveSidebarPanel(null)} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.42)", cursor: "pointer", fontSize: 28, lineHeight: 1 }}>×</button>
+              <button onClick={() => setActiveSidebarPanel(null)} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.42)", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
             </div>
-            <div style={{ display: "flex", gap: 26, padding: "10px 28px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ display: "flex", gap: 18, padding: "10px 16px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               {[
                 { key: "asset", label: assetScopeTab === "mine" ? "我的素材" : "团队素材" },
                 { key: "subject", label: assetScopeTab === "mine" ? "我的主体库" : "团队主体库" },
@@ -1680,33 +1900,33 @@ function CanvasPage() {
                 <button key={tab.key} onClick={() => setAssetSubTab(tab.key)} style={{
                   border: "none", background: "transparent", cursor: "pointer",
                   color: assetSubTab === tab.key ? "#F3F3F3" : "rgba(255,255,255,0.42)",
-                  fontSize: 18, fontWeight: 600, padding: 0,
+                  fontSize: 12, fontWeight: 600, padding: 0,
                 }}>
                   {tab.label}
                 </button>
               ))}
             </div>
-            <div style={{ display: "flex", gap: 22, padding: "22px 28px 8px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+            <div style={{ display: "flex", gap: 8, padding: "12px 16px 10px", borderBottom: "1px solid rgba(255,255,255,0.04)", flexWrap: "wrap" }}>
               {["全部", "人物", "场景", "物品", "风格", "音效", "其他"].map((c) => (
                 <button key={c} onClick={() => setAssetCategory(c)} style={{
-                  height: 44, padding: "0 18px", borderRadius: 14, border: "none", cursor: "pointer",
+                  height: 24, padding: "0 10px", borderRadius: 8, border: "none", cursor: "pointer",
                   background: assetCategory === c ? "rgba(255,255,255,0.09)" : "transparent",
                   color: assetCategory === c ? "#F3F3F3" : "rgba(255,255,255,0.5)",
-                  fontSize: 15, fontWeight: 500,
+                  fontSize: 11, fontWeight: 500,
                 }}>{c}</button>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 246px)", gap: 24, padding: "16px 28px 28px", alignContent: "start" }}>
-              {panelAssets.slice(0, 1).map((asset) => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 12, padding: "14px 16px 16px", alignContent: "start" }}>
+              {panelAssets.slice(0, 6).map((asset) => (
                 <div key={asset.id} onClick={() => useAsset(asset.name)} style={{ cursor: "pointer" }}>
                   <div style={{
-                    width: "246px", height: "246px", borderRadius: 16, overflow: "hidden",
-                    background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.04)", marginBottom: 12,
+                    width: "100%", aspectRatio: "1/1", borderRadius: 10, overflow: "hidden",
+                    background: "#1e1e1e", border: "1px solid rgba(255,255,255,0.04)", marginBottom: 8,
                   }}>
                     <img src={asset.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   </div>
                   <p style={{
-                    fontSize: 16, fontWeight: 500, color: "rgba(255,255,255,0.58)",
+                    fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.58)",
                     whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                   }}>{assetSubTab === "asset" ? "视频素材" : "人物主体"}</p>
                 </div>
@@ -3020,7 +3240,7 @@ function TeamCenterPage() {
 // App 根组件
 // ============================================================
 function App() {
-  const [page, setPage] = useState("list");
+  const [page, setPage] = useState("home");
   const [canvasEntryMode, setCanvasEntryMode] = useState("default");
   const [toast, setToast] = useState(null);
 
@@ -3034,6 +3254,7 @@ function App() {
 
   return (
     <AppContext.Provider value={{ setPage, openCanvas, canvasEntryMode, showToast }}>
+      {page === "home" && <HomePage />}
       {page === "list" && <ProjectListPage />}
       {page === "canvas" && <CanvasPage />}
       {page === "teamCenter" && <TeamCenterPage />}
