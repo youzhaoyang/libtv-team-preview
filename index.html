@@ -647,6 +647,14 @@ function CanvasPage() {
   const getNodeCenter = (node) => ({ x: node.x + 70, y: node.y + 30 });
   const togglePanel = (panelKey) => setActiveSidebarPanel((prev) => (prev === panelKey ? null : panelKey));
   const useAsset = (name) => showToast(`已应用「${name}」到当前节点，并同步给团队成员`, "success");
+  const openGalleryPicker = useCallback((scope = "personal") => {
+    setActiveSidebarPanel(null);
+    setAssetPickerScope(scope);
+    setAssetPickerAppTab("LibTV");
+    setAssetPickerMediaTab("图片");
+    setSelectedGalleryIds([]);
+    setTimeout(() => setShowAssetPicker(true), 0);
+  }, []);
   const toggleGallerySelection = useCallback((assetId) => {
     setSelectedGalleryIds((prev) => {
       if (prev.includes(assetId)) return prev.filter((id) => id !== assetId);
@@ -930,12 +938,7 @@ function CanvasPage() {
               ].map((item) => (
                 <button key={item.key} onClick={() => {
                   if (item.icon === "library") {
-                    setActiveSidebarPanel(null);
-                    setAssetPickerScope("personal");
-                    setAssetPickerAppTab("LibTV");
-                    setAssetPickerMediaTab("图片");
-                    setSelectedGalleryIds([]);
-                    setShowAssetPicker(true);
+                    openGalleryPicker("personal");
                     return;
                   }
                   setActiveSidebarPanel(null);
@@ -1262,7 +1265,7 @@ function CanvasPage() {
                         )
                       ))}
 
-                      <button onClick={(e) => { e.stopPropagation(); setShowAssetPicker(true); setAssetPickerScope("personal"); }} style={{
+                      <button onClick={(e) => { e.stopPropagation(); openGalleryPicker("personal"); }} style={{
                         height: 26, padding: "0 10px", borderRadius: 6, border: "none", cursor: "pointer",
                         background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.82)", fontSize: 11,
                       }}>
@@ -1373,9 +1376,13 @@ function CanvasPage() {
 
         {/* 节点资产弹层（个人资产 / 切换至团队） */}
         {showAssetPicker && (
+          <>
+          <div onClick={() => setShowAssetPicker(false)} style={{
+            position: "absolute", inset: 0, zIndex: 69, background: "rgba(0,0,0,0.35)",
+          }} />
           <div style={{
             position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
-            width: 1020, height: 560, zIndex: 60, borderRadius: 14, overflow: "hidden",
+            width: 1020, height: 560, zIndex: 70, borderRadius: 14, overflow: "hidden",
             background: "rgba(22,22,22,0.985)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 70px rgba(0,0,0,0.65)",
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px 6px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
@@ -1467,6 +1474,7 @@ function CanvasPage() {
               </button>
             </div>
           </div>
+          </>
         )}
 
         {/* 左下角 - 图例 */}
