@@ -1005,7 +1005,7 @@ function CanvasPage() {
         {activeSidebarPanel === "asset" && (
           <div className="fade-in" style={{
             position: "absolute", left: 112, top: 48, zIndex: 36,
-            width: 840, height: 620, borderRadius: 24, overflow: "hidden", background: "rgba(39,39,39,0.985)",
+            width: 840, borderRadius: 24, overflow: "hidden", background: "rgba(39,39,39,0.985)",
             border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 18px 56px rgba(0,0,0,0.5)",
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
@@ -1044,7 +1044,7 @@ function CanvasPage() {
                 }}>{c}</button>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 246px)", gap: 24, padding: "16px 28px 28px", maxHeight: 456, overflowY: "auto", alignContent: "start" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 246px)", gap: 24, padding: "16px 28px 28px", alignContent: "start" }}>
               {panelAssets.slice(0, 1).map((asset) => (
                 <div key={asset.id} onClick={() => useAsset(asset.name)} style={{ cursor: "pointer" }}>
                   <div style={{
@@ -1059,16 +1059,6 @@ function CanvasPage() {
                   }}>{assetSubTab === "asset" ? "视频素材" : "人物主体"}</p>
                 </div>
               ))}
-            </div>
-            <div style={{ position: "absolute", right: 18, top: 142, display: "flex", gap: 8 }}>
-              <button onClick={() => setShowStyleLibrary(true)} style={{
-                height: 28, padding: "0 10px", borderRadius: 8, border: "none", cursor: "pointer",
-                background: "rgba(244,63,94,0.18)", color: "#F43F5E", fontSize: 12,
-              }}>团队风格库</button>
-              <button onClick={() => setShowTeamAssetHub(true)} style={{
-                height: 28, padding: "0 10px", borderRadius: 8, border: "none", cursor: "pointer",
-                background: "rgba(59,130,246,0.18)", color: "#60A5FA", fontSize: 12,
-              }}>团队资产库</button>
             </div>
           </div>
         )}
