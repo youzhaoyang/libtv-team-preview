@@ -466,8 +466,30 @@ const HomeRecentCard = memo(function HomeRecentCard({ project, onClick, isCreate
 });
 
 function HomePage() {
-  const { setPage, openCanvas } = useContext(AppContext);
+  const { setPage, openCanvas, showToast } = useContext(AppContext);
   const recentProjects = [INITIAL_PERSONAL[1], INITIAL_PERSONAL[0], INITIAL_TEAM[0], INITIAL_TEAM[1]];
+  const [showUserHoverCard, setShowUserHoverCard] = useState(false);
+  const userHoverHideTimerRef = useRef(null);
+
+  const clearUserHoverHideTimer = useCallback(() => {
+    if (userHoverHideTimerRef.current) {
+      clearTimeout(userHoverHideTimerRef.current);
+      userHoverHideTimerRef.current = null;
+    }
+  }, []);
+  const openUserHoverCard = useCallback(() => {
+    clearUserHoverHideTimer();
+    setShowUserHoverCard(true);
+  }, [clearUserHoverHideTimer]);
+  const scheduleUserHoverCardClose = useCallback(() => {
+    clearUserHoverHideTimer();
+    userHoverHideTimerRef.current = setTimeout(() => {
+      setShowUserHoverCard(false);
+      userHoverHideTimerRef.current = null;
+    }, 2300);
+  }, [clearUserHoverHideTimer]);
+
+  useEffect(() => () => clearUserHoverHideTimer(), [clearUserHoverHideTimer]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#000", color: "#fff" }}>
@@ -507,7 +529,30 @@ function HomePage() {
           }}>
             <span style={{ fontSize: 12, color: "#F6C453" }}>⚡</span>
             <span style={{ fontSize: 12, color: "#F7D26A", fontWeight: 700 }}>77,209</span>
-            <div style={{ width: 24, height: 24, borderRadius: "50%", background: "linear-gradient(135deg, #3B82F6, #8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>U</div>
+            <div
+              style={{ position: "relative" }}
+              onMouseEnter={openUserHoverCard}
+              onMouseLeave={scheduleUserHoverCardClose}
+            >
+              <div style={{
+                width: 24, height: 24, borderRadius: "50%",
+                background: "linear-gradient(135deg, #3B82F6, #8B5CF6)",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11,
+                cursor: "pointer",
+              }}>U</div>
+              {showUserHoverCard && (
+                <UserHoverCard
+                  showToast={showToast}
+                  onMouseEnter={openUserHoverCard}
+                  onMouseLeave={scheduleUserHoverCardClose}
+                  onOpenTeamCenter={() => {
+                    clearUserHoverHideTimer();
+                    setShowUserHoverCard(false);
+                    setPage("teamCenter");
+                  }}
+                />
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -1353,6 +1398,9 @@ function CanvasPage() {
   const isBlankCanvas = canvasEntryMode === "blank";
   const [nodes, setNodes] = useState(() => (isBlankCanvas ? [] : NODES_INITIAL));
   const [selectedNode, setSelectedNode] = useState(null);
+  const [stickyNotes, setStickyNotes] = useState([]);
+  const [selectedStickyNoteId, setSelectedStickyNoteId] = useState(null);
+  const [editingStickyNoteId, setEditingStickyNoteId] = useState(null);
   const [editingUser, setEditingUser] = useState(() => (isBlankCanvas ? {} : { n2: ONLINE_USERS[1] }));
   const [generatingNode, setGeneratingNode] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(ONLINE_USERS);
@@ -1377,12 +1425,17 @@ function CanvasPage() {
   const [hoveredSidebar, setHoveredSidebar] = useState(null);
   const [showUserHoverCard, setShowUserHoverCard] = useState(false);
   const userHoverHideTimerRef = useRef(null);
+  const stickyNoteCounterRef = useRef(1);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedGroupItem, setSelectedGroupItem] = useState("g1");
   const [showSaveToolboxModal, setShowSaveToolboxModal] = useState(false);
   const [saveToolboxTab, setSaveToolboxTab] = useState("mine");
   const [saveToolboxMode, setSaveToolboxMode] = useState("create");
   const [selectedToolboxCollectionId, setSelectedToolboxCollectionId] = useState("tb-1");
+  const [canvasZoom, setCanvasZoom] = useState(1);
+  const [groupPosition, setGroupPosition] = useState(() => ({ x: GROUP_PRESET.x, y: GROUP_PRESET.y }));
+  const dragStateRef = useRef(null);
+  const suppressClickRef = useRef(false);
 
   const toolboxItems = toolboxTab === "mine" ? TOOLBOX_MINE : TOOLBOX_TEAM;
   const visibleToolboxItems = toolboxItems.slice(0, 6);
@@ -1438,6 +1491,28 @@ function CanvasPage() {
   const getNodeCenter = (node) => ({ x: node.x + 70, y: node.y + 30 });
   const togglePanel = (panelKey) => setActiveSidebarPanel((prev) => (prev === panelKey ? null : panelKey));
   const useAsset = (name) => showToast(`已应用「${name}」到当前节点，并同步给团队成员`, "success");
+  const addStickyNote = useCallback(() => {
+    const noteId = `sticky-${stickyNoteCounterRef.current++}`;
+    const noteIndex = stickyNotes.length;
+    const nextNote = {
+      id: noteId,
+      x: isBlankCanvas ? 650 + (noteIndex % 2) * 26 : 930 + (noteIndex % 2) * 24,
+      y: isBlankCanvas ? 180 + noteIndex * 18 : 118 + noteIndex * 18,
+      text: "",
+    };
+    setStickyNotes((prev) => [...prev, nextNote]);
+    setSelectedStickyNoteId(noteId);
+    setEditingStickyNoteId(noteId);
+    setSelectedNode(null);
+    setSelectedGroup(null);
+    setActiveSidebarPanel(null);
+    showToast("已添加便签", "success");
+  }, [isBlankCanvas, showToast, stickyNotes.length]);
+  const updateStickyNote = useCallback((noteId, text) => {
+    setStickyNotes((prev) => prev.map((note) => (
+      note.id === noteId ? { ...note, text } : note
+    )));
+  }, []);
   const openSubjectLibrary = useCallback((tab = "team") => {
     setSubjectLibraryTab(tab);
     setTimeout(() => setShowSubjectLibrary(true), 0);
@@ -1484,7 +1559,78 @@ function CanvasPage() {
     }, 2300);
   }, [clearUserHoverHideTimer]);
 
+  const beginCanvasDrag = useCallback((event, payload) => {
+    if (event.button !== 0) return;
+    event.stopPropagation();
+    dragStateRef.current = {
+      ...payload,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      moved: false,
+    };
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "grabbing";
+  }, []);
+  const updateCanvasZoom = useCallback((nextZoom) => {
+    setCanvasZoom(Math.max(0.5, Math.min(2, Number(nextZoom.toFixed(2)))));
+  }, []);
+  const stepCanvasZoom = useCallback((delta) => {
+    updateCanvasZoom(canvasZoom + delta);
+  }, [canvasZoom, updateCanvasZoom]);
+
   useEffect(() => () => clearUserHoverHideTimer(), [clearUserHoverHideTimer]);
+
+  useEffect(() => {
+    const handleMouseMove = (event) => {
+      const dragState = dragStateRef.current;
+      if (!dragState) return;
+
+      const dx = event.clientX - dragState.startClientX;
+      const dy = event.clientY - dragState.startClientY;
+      if (!dragState.moved && Math.hypot(dx, dy) > 3) {
+        dragState.moved = true;
+      }
+
+      const nextX = Math.max(16, dragState.originX + dx / canvasZoom);
+      const nextY = Math.max(16, dragState.originY + dy / canvasZoom);
+
+      if (dragState.kind === "node") {
+        setNodes((prev) => prev.map((node) => (
+          node.id === dragState.id ? { ...node, x: nextX, y: nextY } : node
+        )));
+      }
+
+      if (dragState.kind === "group") {
+        setGroupPosition({ x: nextX, y: nextY });
+      }
+
+      if (dragState.kind === "sticky") {
+        setStickyNotes((prev) => prev.map((note) => (
+          note.id === dragState.id ? { ...note, x: nextX, y: nextY } : note
+        )));
+      }
+    };
+
+    const handleMouseUp = () => {
+      const dragState = dragStateRef.current;
+      if (!dragState) return;
+      if (dragState.moved) {
+        suppressClickRef.current = true;
+      }
+      dragStateRef.current = null;
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    };
+  }, [canvasZoom]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
@@ -1605,30 +1751,46 @@ function CanvasPage() {
       </header>
 
       {/* Canvas Area */}
-      <div onClick={() => { setSelectedNode(null); setSelectedGroup(null); }} style={{ position: "relative", height: "calc(100vh - 52px)", overflow: "hidden", background: "radial-gradient(circle at 50% 50%, #111 0%, #0a0a0a 100%)" }}>
-        {/* 网格背景 */}
-        <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
-          <defs>
-            <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
-              <circle cx="12" cy="12" r="0.8" fill="rgba(255,255,255,0.06)" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
+      <div onClick={() => {
+        if (suppressClickRef.current) {
+          suppressClickRef.current = false;
+          return;
+        }
+        setSelectedNode(null);
+        setSelectedGroup(null);
+        setSelectedStickyNoteId(null);
+        setEditingStickyNoteId(null);
+      }} style={{ position: "relative", height: "calc(100vh - 52px)", overflow: "hidden", background: "radial-gradient(circle at 50% 50%, #111 0%, #0a0a0a 100%)" }}>
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          transform: `scale(${canvasZoom})`,
+          transformOrigin: "center center",
+        }}>
+          {/* 网格背景 */}
+          <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+            <defs>
+              <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+                <circle cx="12" cy="12" r="0.8" fill="rgba(255,255,255,0.06)" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
 
-          {/* 连线 */}
-          {!isBlankCanvas && EDGES.map((edge) => {
-            const from = getNodeCenter(nodes.find((n) => n.id === edge.from));
-            const to = getNodeCenter(nodes.find((n) => n.id === edge.to));
-            const midX = (from.x + to.x) / 2;
-            return (
-              <g key={`${edge.from}-${edge.to}`}>
-                <path d={`M ${from.x} ${from.y} C ${midX} ${from.y}, ${midX} ${to.y}, ${to.x} ${to.y}`}
-                  stroke="#86909c" strokeWidth="2" fill="none" strokeLinecap="round" />
-                <circle cx={to.x - 3} cy={to.y} r="3" fill="#86909c" />
-              </g>
-            );
-          })}
-        </svg>
+            {/* 连线 */}
+            {!isBlankCanvas && EDGES.map((edge) => {
+              const from = getNodeCenter(nodes.find((n) => n.id === edge.from));
+              const to = getNodeCenter(nodes.find((n) => n.id === edge.to));
+              const midX = (from.x + to.x) / 2;
+              return (
+                <g key={`${edge.from}-${edge.to}`}>
+                  <path d={`M ${from.x} ${from.y} C ${midX} ${from.y}, ${midX} ${to.y}, ${to.x} ${to.y}`}
+                    stroke="#86909c" strokeWidth="2" fill="none" strokeLinecap="round" />
+                  <circle cx={to.x - 3} cy={to.y} r="3" fill="#86909c" />
+                </g>
+              );
+            })}
+          </svg>
+        </div>
 
         {/* 左侧栏（按截图还原） */}
         <div style={{
@@ -1782,10 +1944,15 @@ function CanvasPage() {
               {[
                 { key: "上传", icon: "upload" },
                 { key: "从图库选择", icon: "library" },
+                { key: "便签", icon: "note" },
               ].map((item) => (
                 <button key={item.key} onClick={() => {
                   if (item.icon === "library") {
                     openGalleryPicker("personal");
+                    return;
+                  }
+                  if (item.icon === "note") {
+                    addStickyNote();
                     return;
                   }
                   setActiveSidebarPanel(null);
@@ -1801,6 +1968,13 @@ function CanvasPage() {
                     {item.icon === "upload" ? (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 16V5" /><path d="M8 9l4-4 4 4" /><path d="M5 19h14" />
+                      </svg>
+                    ) : item.icon === "note" ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 4h12v12l-4 4H6z" />
+                        <path d="M14 16h4" />
+                        <path d="M8 9h8" />
+                        <path d="M8 13h5" />
                       </svg>
                     ) : (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -1935,20 +2109,38 @@ function CanvasPage() {
           </div>
         )}
 
-        {/* 画布分组 + 选中态工具栏 */}
-        {!isBlankCanvas && <div
-          onClick={(e) => { e.stopPropagation(); setSelectedGroup(GROUP_PRESET.id); setSelectedNode(null); }}
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          transform: `scale(${canvasZoom})`,
+          transformOrigin: "center center",
+        }}>
+          {/* 画布分组 + 选中态工具栏 */}
+          {!isBlankCanvas && <div
+          onMouseDown={(e) => beginCanvasDrag(e, { kind: "group", id: GROUP_PRESET.id, originX: groupPosition.x, originY: groupPosition.y })}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (suppressClickRef.current) {
+              suppressClickRef.current = false;
+              return;
+            }
+            setSelectedGroup(GROUP_PRESET.id);
+            setSelectedNode(null);
+            setSelectedStickyNoteId(null);
+            setEditingStickyNoteId(null);
+          }}
           style={{
             position: "absolute",
-            left: GROUP_PRESET.x,
-            top: GROUP_PRESET.y,
+            left: groupPosition.x,
+            top: groupPosition.y,
             width: GROUP_PRESET.width,
             height: GROUP_PRESET.height,
             zIndex: selectedGroup === GROUP_PRESET.id ? 28 : 12,
+            cursor: "grab",
           }}
         >
           {selectedGroup === GROUP_PRESET.id && (
-            <div className="fade-in" style={{
+            <div className="fade-in" onMouseDown={(e) => e.stopPropagation()} style={{
               position: "absolute", left: "50%", top: -50, transform: "translateX(-50%)",
               display: "flex", alignItems: "center", gap: 12, padding: "10px 16px",
               borderRadius: 14, background: "rgba(27,27,27,0.96)", border: "1px solid rgba(255,255,255,0.08)",
@@ -1978,7 +2170,17 @@ function CanvasPage() {
               {GROUP_PRESET.items.map((item) => {
                 const isSelectedItem = selectedGroupItem === item.id;
                 return (
-                <div key={item.id} onClick={(e) => { e.stopPropagation(); setSelectedGroup(GROUP_PRESET.id); setSelectedGroupItem(item.id); }} style={{ display: "flex", flexDirection: "column", minWidth: 0, cursor: "pointer" }}>
+                <div key={item.id} onClick={(e) => {
+                  e.stopPropagation();
+                  if (suppressClickRef.current) {
+                    suppressClickRef.current = false;
+                    return;
+                  }
+                  setSelectedGroup(GROUP_PRESET.id);
+                  setSelectedGroupItem(item.id);
+                  setSelectedStickyNoteId(null);
+                  setEditingStickyNoteId(null);
+                }} style={{ display: "flex", flexDirection: "column", minWidth: 0, cursor: "pointer" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 6, color: "rgba(255,255,255,0.42)", fontSize: 10 }}>
                     <span style={{ fontSize: 10 }}>🖼</span>
                     <span>{item.label}</span>
@@ -1994,7 +2196,7 @@ function CanvasPage() {
               )})}
             </div>
             {selectedGroup === GROUP_PRESET.id && selectedGroupItem && (
-              <div className="fade-in" style={{
+              <div className="fade-in" onMouseDown={(e) => e.stopPropagation()} style={{
                 position: "absolute",
                 left: selectedGroupItem === "g1" || selectedGroupItem === "g3" ? 74 : 378,
                 top: selectedGroupItem === "g1" || selectedGroupItem === "g2" ? 236 : 412,
@@ -2066,10 +2268,10 @@ function CanvasPage() {
               </>
             )}
           </div>
-        </div>}
+          </div>}
 
-        {/* 节点 + 选中工具栏 + 生成器 */}
-        {nodes.map((node) => {
+          {/* 节点 + 选中工具栏 + 生成器 */}
+          {nodes.map((node) => {
           const isEditing = editingUser[node.id];
           const isGenerating = generatingNode === node.id;
           const isSelected = selectedNode === node.id;
@@ -2103,9 +2305,20 @@ function CanvasPage() {
               )}
 
               {/* ── 节点卡片（始终紧凑） ── */}
-              <div onClick={(e) => { e.stopPropagation(); setSelectedNode(isSelected ? null : node.id); }}
+              <div onMouseDown={(e) => beginCanvasDrag(e, { kind: "node", id: node.id, originX: node.x, originY: node.y })}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (suppressClickRef.current) {
+                    suppressClickRef.current = false;
+                    return;
+                  }
+                  setSelectedNode(isSelected ? null : node.id);
+                  setSelectedGroup(null);
+                  setSelectedStickyNoteId(null);
+                  setEditingStickyNoteId(null);
+                }}
                 style={{
-                  width: NODE_W, cursor: "pointer", transition: "box-shadow 0.2s",
+                  width: NODE_W, cursor: "grab", transition: "box-shadow 0.2s",
                   borderRadius: 12, overflow: "hidden", position: "relative",
                   background: "#171717",
                   border: isEditing ? `2px solid ${userColor.border}` : isSelected ? "2px solid #a8a8a8" : "1px solid #363636",
@@ -2292,25 +2505,126 @@ function CanvasPage() {
 
             </div>
           );
-        })}
+          })}
 
-        {isBlankCanvas && (
-          <div style={{
-            position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 14,
-            color: "rgba(255,255,255,0.42)", textAlign: "center",
-          }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: 18, border: "1px solid rgba(255,255,255,0.08)",
-              background: "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 22, color: "rgba(255,255,255,0.68)",
-            }}>＋</div>
-            <div style={{ fontSize: 18, fontWeight: 600, color: "rgba(255,255,255,0.82)" }}>空白画布</div>
-            <div style={{ fontSize: 13, lineHeight: 1.6, maxWidth: 320 }}>
-              从左侧创建节点，或从团队资产、素材、风格库中开始搭建你的画布。
+          {stickyNotes.map((note) => {
+          const isSelected = selectedStickyNoteId === note.id;
+          const isEditing = editingStickyNoteId === note.id;
+          return (
+            <div
+              key={note.id}
+              onMouseDown={(e) => beginCanvasDrag(e, { kind: "sticky", id: note.id, originX: note.x, originY: note.y })}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (suppressClickRef.current) {
+                  suppressClickRef.current = false;
+                  return;
+                }
+                setSelectedStickyNoteId(note.id);
+                setSelectedNode(null);
+                setSelectedGroup(null);
+                if (!isEditing) {
+                  setEditingStickyNoteId(null);
+                }
+              }}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                setSelectedStickyNoteId(note.id);
+                setSelectedNode(null);
+                setSelectedGroup(null);
+                setEditingStickyNoteId(note.id);
+              }}
+              style={{
+                position: "absolute",
+                left: note.x,
+                top: note.y,
+                zIndex: isSelected ? 32 : 18,
+                width: 172,
+                minHeight: 172,
+                borderRadius: 2,
+                background: "#FDE39A",
+                border: "1px solid rgba(174,134,49,0.24)",
+                boxShadow: isSelected ? "0 0 0 2px rgba(255,235,173,0.68), 0 16px 28px rgba(0,0,0,0.22)" : "0 14px 26px rgba(0,0,0,0.18)",
+                cursor: "grab",
+              }}
+            >
+              <div style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                width: 22,
+                height: 22,
+                background: "linear-gradient(135deg, rgba(255,243,196,0.96) 0%, rgba(243,209,120,0.92) 100%)",
+                clipPath: "polygon(0 0, 100% 0, 100% 100%)",
+                boxShadow: "-1px 1px 0 rgba(174,134,49,0.12)",
+              }} />
+              <textarea
+                value={note.text}
+                onMouseDown={(e) => {
+                  if (isEditing) {
+                    e.stopPropagation();
+                    setSelectedStickyNoteId(note.id);
+                    setSelectedNode(null);
+                    setSelectedGroup(null);
+                  }
+                }}
+                onClick={(e) => {
+                  if (isEditing) {
+                    e.stopPropagation();
+                  }
+                }}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  setEditingStickyNoteId(note.id);
+                }}
+                onChange={(e) => updateStickyNote(note.id, e.target.value)}
+                onBlur={() => {
+                  if (editingStickyNoteId === note.id) {
+                    setEditingStickyNoteId(null);
+                  }
+                }}
+                placeholder="输入便签内容"
+                readOnly={!isEditing}
+                autoFocus={isEditing}
+                style={{
+                  width: "100%",
+                  minHeight: 172,
+                  padding: "18px 16px 16px",
+                  border: "none",
+                  outline: "none",
+                  resize: "none",
+                  background: "transparent",
+                  color: "#6D5313",
+                  fontSize: 18,
+                  lineHeight: 1.45,
+                  fontWeight: 500,
+                  fontFamily: "inherit",
+                  cursor: isEditing ? "text" : "grab",
+                  userSelect: isEditing ? "text" : "none",
+                }}
+              />
             </div>
-          </div>
-        )}
+          );
+          })}
+
+          {isBlankCanvas && nodes.length === 0 && stickyNotes.length === 0 && (
+            <div style={{
+              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 14,
+              color: "rgba(255,255,255,0.42)", textAlign: "center",
+            }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: 18, border: "1px solid rgba(255,255,255,0.08)",
+                background: "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 22, color: "rgba(255,255,255,0.68)",
+              }}>＋</div>
+              <div style={{ fontSize: 18, fontWeight: 600, color: "rgba(255,255,255,0.82)" }}>空白画布</div>
+              <div style={{ fontSize: 13, lineHeight: 1.6, maxWidth: 320 }}>
+                从左侧创建节点，或从团队资产、素材、风格库中开始搭建你的画布。
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* 团队风格库（大面板） */}
         {showStyleLibrary && (
@@ -2811,16 +3125,22 @@ function CanvasPage() {
           background: "rgba(25,30,38,0.9)", backdropFilter: "blur(12px)",
           border: "1px solid #363636", borderRadius: 10, padding: 4,
         }}>
-          {["−", "100%", "+", "⊞"].map((label, i) => (
-            <button key={i} style={{
-              width: label === "100%" ? 48 : 32, height: 32, borderRadius: 8, border: "none",
+          {[
+            { key: "minus", label: "−", action: () => stepCanvasZoom(-0.1) },
+            { key: "percent", label: `${Math.round(canvasZoom * 100)}%`, action: () => updateCanvasZoom(1) },
+            { key: "plus", label: "+", action: () => stepCanvasZoom(0.1) },
+            { key: "reset", label: "⊞", action: () => updateCanvasZoom(1) },
+          ].map((item) => (
+            <button key={item.key} onClick={item.action} style={{
+              width: item.key === "percent" ? 56 : 32, height: 32, borderRadius: 8, border: "none",
               background: "transparent", color: "rgba(255,255,255,0.7)", fontSize: 13, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               transition: "background 0.15s",
             }}
               onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
               onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-            >{label}</button>
+              title={item.key === "percent" || item.key === "reset" ? "重置为 100%" : undefined}
+            >{item.label}</button>
           ))}
         </div>
       </div>
@@ -2832,8 +3152,21 @@ function TeamCenterPage() {
   const { setPage, showToast } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState("member");
   const [showPointSettingModal, setShowPointSettingModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [transferAdminTarget, setTransferAdminTarget] = useState(null);
   const [batchPointValue, setBatchPointValue] = useState("1000");
+  const [securitySettings, setSecuritySettings] = useState({
+    allowPublishToCommunity: false,
+    allowExternalShare: false,
+    memberProjectVisibility: "private",
+    imageShareTarget: "team",
+  });
+  const [securityDraft, setSecurityDraft] = useState({
+    allowPublishToCommunity: false,
+    allowExternalShare: false,
+    memberProjectVisibility: "private",
+    imageShareTarget: "team",
+  });
   const createEmptyMember = useCallback((id) => ({
     id,
     name: "暂无成员",
@@ -2885,6 +3218,19 @@ function TeamCenterPage() {
     setBatchPointValue(activeMembers[0]?.limit || "1000");
     setShowPointSettingModal(true);
   }, [activeMembers, buildPointDraftFromMembers, teamMembers]);
+  const openSecurityModal = useCallback(() => {
+    setSecurityDraft(securitySettings);
+    setShowSecurityModal(true);
+  }, [securitySettings]);
+  const closeSecurityModal = useCallback(() => {
+    setShowSecurityModal(false);
+    setSecurityDraft(securitySettings);
+  }, [securitySettings]);
+  const saveSecuritySettings = useCallback(() => {
+    setSecuritySettings(securityDraft);
+    setShowSecurityModal(false);
+    showToast("共享设置已保存", "success");
+  }, [securityDraft, showToast]);
   useEffect(() => {
     if (!showPointSettingModal) {
       setMemberPointValues(buildPointDraftFromMembers(teamMembers));
@@ -3013,7 +3359,22 @@ function TeamCenterPage() {
                 color: "#4E5969", fontSize: 13, padding: 0,
               }}>积分设置</button>
               <span style={{ color: "#C9CDD4" }}>|</span>
-              <span>◎ 分享设置</span>
+              <button onClick={openSecurityModal} style={{
+                height: 34, padding: "0 14px", borderRadius: 10, border: "1px solid #E5E6EB",
+                background: "#fff", cursor: "pointer", color: "#4E5969", fontSize: 13, fontWeight: 500,
+                boxShadow: "0 1px 2px rgba(16,24,40,0.04)",
+              }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#F7F8FA";
+                  e.currentTarget.style.borderColor = "#C9CDD4";
+                  e.currentTarget.style.color = "#1D2129";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#fff";
+                  e.currentTarget.style.borderColor = "#E5E6EB";
+                  e.currentTarget.style.color = "#4E5969";
+                }}
+              >共享设置</button>
             </div>
           </div>
 
@@ -3034,7 +3395,7 @@ function TeamCenterPage() {
                 <div>账号</div>
                 <div>角色</div>
                 <div>本周期积分消耗</div>
-                <div>积分消耗上限</div>
+                <div>本周期积分消耗上限</div>
                 <div style={{ textAlign: "right" }}>操作</div>
               </div>
               {teamMembers.map((member) => (
@@ -3180,6 +3541,173 @@ function TeamCenterPage() {
                   background: "#111", color: "#fff", fontSize: 16, fontWeight: 600,
                 }}>确定</button>
               </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {showSecurityModal && (
+        <>
+          <div onClick={closeSecurityModal} style={{
+            position: "fixed", inset: 0, background: "rgba(15,23,42,0.42)", zIndex: 184,
+          }} />
+          <div className="fade-in" style={{
+            position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
+            width: 860, maxWidth: "calc(100vw - 32px)", maxHeight: "calc(100vh - 40px)", overflow: "hidden",
+            zIndex: 185, borderRadius: 18, background: "#fff",
+            boxShadow: "0 20px 50px rgba(15,23,42,0.14)", border: "1px solid #EEF2F7",
+          }}>
+            <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #EEF2F7" }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827" }}>共享设置</div>
+              <div style={{ marginTop: 6, color: "#6B7280", fontSize: 13 }}>配置团队项目的发布、分享与访问权限</div>
+            </div>
+
+            <div style={{ padding: "22px 24px 24px", maxHeight: "calc(100vh - 220px)", overflowY: "auto", background: "#fff" }}>
+              <div style={{
+                border: "1px solid #EEF2F7", borderRadius: 16, background: "#fff", padding: 18,
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, fontWeight: 700, color: "#1F2937" }}>
+                      <span>1.</span>
+                      <span>允许发布到社区</span>
+                    </div>
+                    <div style={{ marginTop: 8, color: "#6B7280", fontSize: 13 }}>开启后，团队成员可将项目发布到社区。</div>
+                  </div>
+                  <button onClick={() => setSecurityDraft((prev) => ({ ...prev, allowPublishToCommunity: !prev.allowPublishToCommunity }))} style={{
+                    position: "relative", width: 54, height: 30, borderRadius: 999, border: "none", cursor: "pointer",
+                    background: securityDraft.allowPublishToCommunity ? "#2563EB" : "#DBE2EE", flexShrink: 0,
+                    transition: "background .15s ease",
+                  }}>
+                    <span style={{
+                      position: "absolute", top: 3, left: securityDraft.allowPublishToCommunity ? 27 : 3,
+                      width: 24, height: 24, borderRadius: "50%", background: "#fff",
+                      boxShadow: "0 2px 6px rgba(15,23,42,.16)", transition: "left .15s ease",
+                    }} />
+                  </button>
+                </div>
+              </div>
+
+              <div style={{
+                border: "1px solid #EEF2F7", borderRadius: 16, background: "#fff", padding: 18, marginTop: 14,
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, fontWeight: 700, color: "#1F2937" }}>
+                      <span>2.</span>
+                      <span>允许对外分享</span>
+                    </div>
+                    <div style={{ marginTop: 8, color: "#6B7280", fontSize: 13 }}>开启后，团队项目支持分享给团队外部成员或通过外链访问。</div>
+                  </div>
+                  <button onClick={() => setSecurityDraft((prev) => ({ ...prev, allowExternalShare: !prev.allowExternalShare }))} style={{
+                    position: "relative", width: 54, height: 30, borderRadius: 999, border: "none", cursor: "pointer",
+                    background: securityDraft.allowExternalShare ? "#2563EB" : "#DBE2EE", flexShrink: 0,
+                    transition: "background .15s ease",
+                  }}>
+                    <span style={{
+                      position: "absolute", top: 3, left: securityDraft.allowExternalShare ? 27 : 3,
+                      width: 24, height: 24, borderRadius: "50%", background: "#fff",
+                      boxShadow: "0 2px 6px rgba(15,23,42,.16)", transition: "left .15s ease",
+                    }} />
+                  </button>
+                </div>
+              </div>
+
+              <div style={{
+                border: "1px solid #EEF2F7", borderRadius: 16, background: "#fff", padding: 18, marginTop: 14,
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, fontWeight: 700, color: "#1F2937" }}>
+                      <span>3.</span>
+                      <span>项目可见范围</span>
+                    </div>
+                    <div style={{ marginTop: 8, color: "#6B7280", fontSize: 13 }}>控制成员项目是否对团队内其他成员可见。</div>
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gap: 10, marginTop: 14, paddingLeft: 2 }}>
+                  {[
+                    { key: "public", label: "公开", desc: "团队内成员可查看该项目。" },
+                    { key: "private", label: "不公开「默认」", desc: "仅创建者或有权限的成员可见。" },
+                  ].map((item) => (
+                    <label key={item.key} style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", userSelect: "none", fontSize: 14, color: "#334155" }}>
+                      <input
+                        type="radio"
+                        name="visibility"
+                        checked={securityDraft.memberProjectVisibility === item.key}
+                        onChange={() => setSecurityDraft((prev) => ({ ...prev, memberProjectVisibility: item.key }))}
+                        style={{ marginTop: 1, width: 16, height: 16, accentColor: "#2563EB" }}
+                      />
+                      <div>
+                        <div>{item.label}</div>
+                        <div style={{ color: "#6B7280", fontSize: 13, marginTop: 4 }}>{item.desc}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                <div style={{
+                  marginTop: 14, padding: "12px 14px", borderRadius: 12, background: "#F8FBFF",
+                  border: "1px solid #E4EDF9", color: "#475569", fontSize: 13,
+                }}>
+                  说明：当项目设置为「不公开」时，默认仅创建者可见；管理员可后续调整为「公开」。
+                </div>
+              </div>
+
+              <div style={{
+                border: "1px solid #EEF2F7", borderRadius: 16, background: "#fff", padding: 18, marginTop: 14,
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, fontWeight: 700, color: "#1F2937" }}>
+                      <span>4.</span>
+                      <span>Lib生成内容设置</span>
+                    </div>
+                    <div style={{ marginTop: 8, color: "#6B7280", fontSize: 13 }}>设置生成图片的默认存放位置，可选择个人图库或团队图库。</div>
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gap: 8, marginTop: 16 }}>
+                  {[
+                    { key: "personal", title: "生成图片默认存放在个人图库", desc: "开启后生成的图片默认存放到个人图库，需手动分享到团队" },
+                    { key: "team", title: "生成图片默认分享到团队", desc: "开启后生成的图片默认分享到团队图库，所有团队成员均可见" },
+                  ].map((item) => {
+                    const selected = securityDraft.imageShareTarget === item.key;
+                    return (
+                      <label key={item.key} style={{
+                        display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", userSelect: "none",
+                        padding: 16, borderRadius: 12, border: `1px solid ${selected ? "#DBEAFE" : "transparent"}`,
+                        background: selected ? "#EFF6FF" : "#fff", transition: "all 0.2s ease",
+                      }}>
+                        <input
+                          type="radio"
+                          name="imgShare"
+                          checked={selected}
+                          onChange={() => setSecurityDraft((prev) => ({ ...prev, imageShareTarget: item.key }))}
+                          style={{ marginTop: 2, width: 16, height: 16, accentColor: "#2563EB" }}
+                        />
+                        <div>
+                          <div style={{ fontSize: 15, fontWeight: 600, color: "#1F2937", marginBottom: 4 }}>{item.title}</div>
+                          <div style={{ fontSize: 13, color: "#6B7280", lineHeight: 1.4 }}>{item.desc}</div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+
+            <div style={{ padding: "16px 24px 24px", display: "flex", justifyContent: "flex-end", gap: 10, borderTop: "1px solid #EEF2F7", background: "#fff" }}>
+              <button onClick={closeSecurityModal} style={{
+                height: 38, padding: "0 18px", borderRadius: 10, border: "1px solid #CBD5E1",
+                background: "#fff", color: "#1F2937", cursor: "pointer", fontSize: 14,
+              }}>取消</button>
+              <button onClick={saveSecuritySettings} style={{
+                height: 38, padding: "0 18px", borderRadius: 10, border: "1px solid #2563EB",
+                background: "#2563EB", color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 700,
+              }}>保存设置</button>
             </div>
           </div>
         </>
