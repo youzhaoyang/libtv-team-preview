@@ -3156,14 +3156,18 @@ function TeamCenterPage() {
   const [transferAdminTarget, setTransferAdminTarget] = useState(null);
   const [batchPointValue, setBatchPointValue] = useState("1000");
   const [securitySettings, setSecuritySettings] = useState({
-    allowPublishToCommunity: false,
-    allowExternalShare: false,
+    allowPublishToCommunity: true,
+    publishScope: "owner",
+    allowExternalShare: true,
+    externalShareScope: "owner",
     memberProjectVisibility: "private",
     imageShareTarget: "team",
   });
   const [securityDraft, setSecurityDraft] = useState({
-    allowPublishToCommunity: false,
-    allowExternalShare: false,
+    allowPublishToCommunity: true,
+    publishScope: "owner",
+    allowExternalShare: true,
+    externalShareScope: "owner",
     memberProjectVisibility: "private",
     imageShareTarget: "team",
   });
@@ -3229,7 +3233,7 @@ function TeamCenterPage() {
   const saveSecuritySettings = useCallback(() => {
     setSecuritySettings(securityDraft);
     setShowSecurityModal(false);
-    showToast("共享设置已保存", "success");
+    showToast("访问与发布设置已保存", "success");
   }, [securityDraft, showToast]);
   useEffect(() => {
     if (!showPointSettingModal) {
@@ -3374,7 +3378,7 @@ function TeamCenterPage() {
                   e.currentTarget.style.borderColor = "#E5E6EB";
                   e.currentTarget.style.color = "#4E5969";
                 }}
-              >共享设置</button>
+              >访问与发布设置</button>
             </div>
           </div>
 
@@ -3558,7 +3562,7 @@ function TeamCenterPage() {
             boxShadow: "0 20px 50px rgba(15,23,42,0.14)", border: "1px solid #EEF2F7",
           }}>
             <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #EEF2F7" }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827" }}>共享设置</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827" }}>访问与发布设置</div>
               <div style={{ marginTop: 6, color: "#6B7280", fontSize: 13 }}>配置团队项目的发布、分享与访问权限</div>
             </div>
 
@@ -3572,7 +3576,7 @@ function TeamCenterPage() {
                       <span>1.</span>
                       <span>允许发布到社区</span>
                     </div>
-                    <div style={{ marginTop: 8, color: "#6B7280", fontSize: 13 }}>开启后，团队成员可将项目发布到社区。</div>
+                    <div style={{ marginTop: 8, color: "#6B7280", fontSize: 13 }}>开启后，团队成员可将项目发布到社区；关闭后普通成员不可发布，仅团队管理者仍可发布。</div>
                   </div>
                   <button onClick={() => setSecurityDraft((prev) => ({ ...prev, allowPublishToCommunity: !prev.allowPublishToCommunity }))} style={{
                     position: "relative", width: 54, height: 30, borderRadius: 999, border: "none", cursor: "pointer",
@@ -3586,6 +3590,28 @@ function TeamCenterPage() {
                     }} />
                   </button>
                 </div>
+                {securityDraft.allowPublishToCommunity && (
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #F1F5F9", display: "grid", gap: 10 }}>
+                    {[
+                      { key: "all", label: "全员可发布", desc: "具备条件的成员均可将团队项目发布至社区。" },
+                      { key: "owner", label: "仅项目所有者可发布", desc: "仅项目所有者可执行发布至社区。" },
+                    ].map((item) => (
+                      <label key={item.key} style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", userSelect: "none", fontSize: 14, color: "#334155" }}>
+                        <input
+                          type="radio"
+                          name="publishScope"
+                          checked={securityDraft.publishScope === item.key}
+                          onChange={() => setSecurityDraft((prev) => ({ ...prev, publishScope: item.key }))}
+                          style={{ marginTop: 1, width: 16, height: 16, accentColor: "#2563EB" }}
+                        />
+                        <div>
+                          <div style={{ fontWeight: 600, color: "#1F2937" }}>{item.label}</div>
+                          <div style={{ color: "#6B7280", fontSize: 13, marginTop: 4 }}>{item.desc}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div style={{
@@ -3597,7 +3623,7 @@ function TeamCenterPage() {
                       <span>2.</span>
                       <span>允许对外分享</span>
                     </div>
-                    <div style={{ marginTop: 8, color: "#6B7280", fontSize: 13 }}>开启后，团队项目支持分享给团队外部成员或通过外链访问。</div>
+                    <div style={{ marginTop: 8, color: "#6B7280", fontSize: 13 }}>开启后，团队项目支持分享给团队外部成员或通过外链访问；关闭后入口置灰，已生成外链失效。</div>
                   </div>
                   <button onClick={() => setSecurityDraft((prev) => ({ ...prev, allowExternalShare: !prev.allowExternalShare }))} style={{
                     position: "relative", width: 54, height: 30, borderRadius: 999, border: "none", cursor: "pointer",
@@ -3611,6 +3637,28 @@ function TeamCenterPage() {
                     }} />
                   </button>
                 </div>
+                {securityDraft.allowExternalShare && (
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #F1F5F9", display: "grid", gap: 10 }}>
+                    {[
+                      { key: "all", label: "全员可分享", desc: "具备条件的成员均可生成外链或对外分享。" },
+                      { key: "owner", label: "仅项目所有者可分享", desc: "仅项目所有者可对外分享或生成外部访问链接。" },
+                    ].map((item) => (
+                      <label key={item.key} style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", userSelect: "none", fontSize: 14, color: "#334155" }}>
+                        <input
+                          type="radio"
+                          name="externalShareScope"
+                          checked={securityDraft.externalShareScope === item.key}
+                          onChange={() => setSecurityDraft((prev) => ({ ...prev, externalShareScope: item.key }))}
+                          style={{ marginTop: 1, width: 16, height: 16, accentColor: "#2563EB" }}
+                        />
+                        <div>
+                          <div style={{ fontWeight: 600, color: "#1F2937" }}>{item.label}</div>
+                          <div style={{ color: "#6B7280", fontSize: 13, marginTop: 4 }}>{item.desc}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div style={{
@@ -3628,8 +3676,8 @@ function TeamCenterPage() {
 
                 <div style={{ display: "grid", gap: 10, marginTop: 14, paddingLeft: 2 }}>
                   {[
-                    { key: "public", label: "公开", desc: "团队内成员可查看该项目。" },
-                    { key: "private", label: "不公开「默认」", desc: "仅创建者或有权限的成员可见。" },
+                    { key: "public", label: "公开（团队内可见）", desc: "团队内成员可查看该项目。" },
+                    { key: "private", label: "不公开（默认，仅创建者及有权限成员可见）", desc: "仅创建者及被显式授权的成员可见。" },
                   ].map((item) => (
                     <label key={item.key} style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", userSelect: "none", fontSize: 14, color: "#334155" }}>
                       <input
@@ -3664,14 +3712,14 @@ function TeamCenterPage() {
                       <span>4.</span>
                       <span>Lib生成内容设置</span>
                     </div>
-                    <div style={{ marginTop: 8, color: "#6B7280", fontSize: 13 }}>设置生成图片的默认存放位置，可选择个人图库或团队图库。</div>
+                    <div style={{ marginTop: 8, color: "#6B7280", fontSize: 13 }}>设置生成内容的默认存放位置：个人图库或团队图库。仅影响后续新生成内容，历史内容不迁移。</div>
                   </div>
                 </div>
 
                 <div style={{ display: "grid", gap: 8, marginTop: 16 }}>
                   {[
-                    { key: "personal", title: "生成图片默认存放在个人图库", desc: "开启后生成的图片默认存放到个人图库，需手动分享到团队" },
-                    { key: "team", title: "生成图片默认分享到团队", desc: "开启后生成的图片默认分享到团队图库，所有团队成员均可见" },
+                    { key: "personal", title: "生成内容默认存个人图库", desc: "新生成内容默认进入个人图库，需手动分享至团队后其他成员可见。" },
+                    { key: "team", title: "生成内容默认分享到团队", desc: "新生成内容默认进入团队图库，所有团队成员均可见。" },
                   ].map((item) => {
                     const selected = securityDraft.imageShareTarget === item.key;
                     return (
