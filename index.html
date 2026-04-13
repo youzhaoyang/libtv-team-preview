@@ -1694,8 +1694,10 @@ function CanvasPage() {
   const [stickyNotes, setStickyNotes] = useState([]);
   const [selectedStickyNoteId, setSelectedStickyNoteId] = useState(null);
   const [editingStickyNoteId, setEditingStickyNoteId] = useState(null);
-  const [editingUser, setEditingUser] = useState(() => (isBlankCanvas ? {} : { n2: ONLINE_USERS[1] }));
-  const [generatingNode, setGeneratingNode] = useState(null);
+  const [editingUser, setEditingUser] = useState(() => (isBlankCanvas ? {} : { n2: ONLINE_USERS[1], n4: ONLINE_USERS[2] }));
+  const [generatingNode, setGeneratingNode] = useState(() => isBlankCanvas ? null : "n4");
+  const [genProgress, setGenProgress] = useState(37);
+  const [genInitiator, setGenInitiator] = useState(() => isBlankCanvas ? null : ONLINE_USERS[2]);
   const [onlineUsers, setOnlineUsers] = useState(ONLINE_USERS);
   const [showUserJoin, setShowUserJoin] = useState(false);
   const [activeSidebarPanel, setActiveSidebarPanel] = useState(null);
@@ -2553,12 +2555,45 @@ function CanvasPage() {
                 </div>
               )}
 
+              {/* ── 生成中状态覆盖 ── */}
+              {isGen && (
+                <div className="fade-in" style={{ position: "absolute", top: -32, left: 0, right: 0, zIndex: 16 }}>
+                  {genInitiator && genInitiator.id !== "u1" ? (
+                    /* 其他成员发起的生成 */
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: 20, height: 20, borderRadius: "50%", background: genInitiator.color.border, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10 }}>{genInitiator.avatar}</div>
+                      <span style={{ fontSize: 10, color: genInitiator.color.border, fontWeight: 600 }}>{genInitiator.name} 生成中</span>
+                    </div>
+                  ) : (
+                    /* 自己发起的生成 — 进度条 + 操作 */
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ flex: 1, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+                        <div style={{ width: `${genProgress}%`, height: "100%", borderRadius: 2, background: "linear-gradient(90deg, #2ee8d8, #5898ff)", transition: "width 0.3s" }} />
+                      </div>
+                      <span style={{ fontSize: 10, color: "#2ee8d8", fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", minWidth: 30 }}>{genProgress}%</span>
+                      <button onClick={(e) => { e.stopPropagation(); setGeneratingNode(null); setGenInitiator(null); showToast("已取消生成", "info"); }} style={{ padding: "2px 8px", borderRadius: 4, border: "1px solid rgba(240,96,96,0.2)", background: "rgba(240,96,96,0.06)", color: "#f06060", fontSize: 9, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>取消</button>
+                      <button onClick={(e) => { e.stopPropagation(); showToast("已加速生成", "success"); }} style={{ padding: "2px 8px", borderRadius: 4, border: "1px solid rgba(46,232,216,0.2)", background: "rgba(46,232,216,0.06)", color: "#2ee8d8", fontSize: 9, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>加速</button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* ── 节点卡片（始终紧凑） ── */}
               <div onMouseDown={(e) => beginCanvasDrag(e, { kind: "node", id: node.id, originX: node.x, originY: node.y })}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (suppressClickRef.current) {
                     suppressClickRef.current = false;
+                    return;
+                  }
+                  // 锁定检测：被其他用户编辑的节点
+                  if (isEditing) {
+                    showToast(`该节点正在被 ${isEditing.name} 编辑，请稍后再试`, "warning");
+                    return;
+                  }
+                  // 生成中检测
+                  if (isGen && genInitiator && genInitiator.id !== "u1") {
+                    showToast("生成任务执行中，请等待完成", "warning");
                     return;
                   }
                   setSelectedNode(isSelected ? null : node.id);
@@ -3442,6 +3477,7 @@ function TeamCenterPage() {
   };
   const filteredReviews = reviewSubTab === "all" ? reviewList : reviewList.filter(r => r.status === (reviewSubTab === "pending" ? "pending" : reviewSubTab === "approved" ? "approved" : "rejected"));
   const [showPointSettingModal, setShowPointSettingModal] = useState(false);
+  const [quotaTab, setQuotaTab] = useState(0);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [transferAdminTarget, setTransferAdminTarget] = useState(null);
   const [batchPointValue, setBatchPointValue] = useState("1000");
@@ -3581,6 +3617,14 @@ function TeamCenterPage() {
     showToast("积分设置已保存", "success");
   }, [buildPointDraftFromMembers, memberPointValues, showToast, teamMembers]);
 
+  const avatarBgs = [
+    "linear-gradient(135deg, #d8a030, #c08020)",
+    "linear-gradient(135deg, #9070f0, #5898ff)",
+    "#8868a0",
+    "linear-gradient(135deg, #1eaa9e, #168880)",
+    "linear-gradient(135deg, #5898ff, #9070f0)",
+  ];
+
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(4,4,8,0.88)", backdropFilter: "blur(6px)" }}>
       <div className="slide-up" style={{ width: 1000, maxWidth: "96vw", maxHeight: "92vh", background: "#111117", borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 24px 80px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3)", overflow: "hidden", display: "flex", flexDirection: "column", position: "relative", color: "#f0f0f6", fontFamily: "'Noto Sans SC', 'Plus Jakarta Sans', system-ui, sans-serif" }}>
@@ -3647,26 +3691,50 @@ function TeamCenterPage() {
           </div>
         )}
 
-        {/* Seat Strip */}
+        {/* Seat Strip — 4 items */}
         <div style={{ display: "flex", alignItems: "center", gap: 0, padding: "10px 16px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 7, marginBottom: 12, background: "#18181f" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
-            <span style={{ fontSize: 11, color: "#787894", fontWeight: 500 }}>已用席位</span>
-            <span style={{ fontSize: 18, fontWeight: 800, fontFamily: "'Plus Jakarta Sans'", letterSpacing: -0.3, color: "#2ee8d8" }}>5</span>
-          </div>
-          <span style={{ color: "#505068", fontSize: 14, margin: "0 6px" }}>·</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
-            <span style={{ fontSize: 11, color: "#787894", fontWeight: 500 }}>可用席位</span>
-            <span style={{ fontSize: 18, fontWeight: 800, fontFamily: "'Plus Jakarta Sans'", letterSpacing: -0.3, color: "#2ee8d8" }}>5</span>
-          </div>
-          <span style={{ color: "#505068", fontSize: 14, margin: "0 6px" }}>·</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
-            <span style={{ fontSize: 11, color: "#787894", fontWeight: 500 }}>到期时间</span>
-            <span style={{ fontSize: 18, fontWeight: 800, fontFamily: "'Plus Jakarta Sans'", letterSpacing: -0.3, color: teamStatus === "exp" ? "#f06060" : "#e8c040" }}>{teamStatus === "exp" ? "2026-03-16（已过期）" : "2027-01-20"}</span>
-          </div>
+          {[
+            { l: "已用席位", v: "5", c: "#2ee8d8" },
+            { l: "可用席位", v: "5", c: "#2ee8d8" },
+            { l: "到期时间", v: teamStatus === "exp" ? "2026-03-16" : "2027-01-20", c: teamStatus === "exp" ? "#f06060" : "#e8c040" },
+            { l: "下次发放权益", v: "2026-04-09", c: "#b0b0c4" },
+          ].map((s, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <span style={{ color: "#505068", fontSize: 14, margin: "0 6px" }}>·</span>}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
+                <span style={{ fontSize: 11, color: "#787894", fontWeight: 500 }}>{s.l}</span>
+                <span style={{ fontSize: 18, fontWeight: 800, fontFamily: "'Plus Jakarta Sans'", letterSpacing: -0.3, color: s.c }}>{s.v}</span>
+              </div>
+            </React.Fragment>
+          ))}
         </div>
 
-        {/* Credits Section */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
+        {/* Credits — Single Summary Card */}
+        <div style={{ padding: "18px 20px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)", background: "#18181f", marginBottom: 18, position: "relative" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: 11, color: "#787894", marginBottom: 6 }}>积分余额</div>
+              <div style={{ fontSize: 36, fontWeight: 800, fontFamily: "'Plus Jakarta Sans'", color: "#f0f0f6", letterSpacing: -1, marginBottom: 8 }}>345,999 <sub style={{ fontSize: 13, fontWeight: 400, color: "#787894" }}>点</sub></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 11, color: "#787894" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2ee8d8" }} />通用积分 266,183点</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f0a040" }} />专属模型积分 12,000点</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "#9070f0" }} />LibTV 专属积分 67,816点</span>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button onClick={() => showToast("充值功能（演示）", "info")} style={{ padding: "10px 24px", borderRadius: 7, border: "none", background: "#2ee8d8", color: "#0c0c11", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", transition: "filter 0.15s" }}
+                onMouseEnter={e => e.currentTarget.style.filter = "brightness(1.1)"}
+                onMouseLeave={e => e.currentTarget.style.filter = "none"}
+              >充值</button>
+              <button onClick={() => showToast("模型超市（演示）", "info")} style={{ padding: "8px 20px", borderRadius: 7, border: "1px solid rgba(255,255,255,0.10)", background: "#1f1f28", color: "#b0b0c4", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "#272733"; e.currentTarget.style.color = "#f0f0f6"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "#1f1f28"; e.currentTarget.style.color = "#b0b0c4"; }}
+              >模型超市</button>
+            </div>
+          </div>
+        </div>
+        {/* OLD Credits section replaced — skip to Tabs */}
+        {false && <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
           {/* General Credits Card */}
           <div style={{ flex: 1, padding: "14px 16px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)", background: "#18181f", position: "relative", overflow: "visible", minHeight: 80, transition: "border-color 0.2s" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)"; e.currentTarget.style.zIndex = 20; }}
@@ -3748,14 +3816,14 @@ function TeamCenterPage() {
               </div>
             </div>
           )}
-        </div>
+        </div>}
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: 0, borderBottom: "1px solid rgba(255,255,255,0.06)", margin: "0 -28px", padding: "0 28px" }}>
           {[
             { key: "member", label: "团队成员(5/10)" },
             { key: "space", label: "访问与发布设置" },
-            { key: "review", label: "成员审核", badge: pendingCount },
+            { key: "review", label: `成员审核（${pendingCount}）` },
           ].map((tab) => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
               padding: "12px 20px", border: "none", background: "transparent", cursor: "pointer",
@@ -3765,14 +3833,13 @@ function TeamCenterPage() {
             }}
               onMouseEnter={e => { if (activeTab !== tab.key) e.currentTarget.style.color = "#787894"; }}
               onMouseLeave={e => { if (activeTab !== tab.key) e.currentTarget.style.color = "#505068"; }}
-            >{tab.label}{tab.badge > 0 && <span style={{ padding: "2px 7px", borderRadius: 8, fontSize: 9, fontWeight: 600, background: activeTab === tab.key ? "rgba(46,232,216,0.10)" : "rgba(232,192,64,0.08)", color: activeTab === tab.key ? "#2ee8d8" : "#e8c040" }}>({tab.badge})</span>}</button>
+            >{tab.label}</button>
           ))}
         </div>
 
-        {/* Sub-bar (hidden when access tab is active) */}
-        {activeTab !== "space" && (
-          <div style={{ padding: "12px 0", fontSize: 11, color: "#787894", display: "flex", alignItems: "center", gap: 20, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <span>下次发放权益：2026-04-09</span>
+        {/* Sub-bar */}
+        {activeTab === "member" && (
+          <div style={{ padding: "10px 0", fontSize: 11, color: "#787894", display: "flex", alignItems: "center", gap: 20, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             <span>本周期剩余删除次数：x</span>
             <span style={{ marginLeft: "auto" }} />
             <button onClick={openPointSettingModal} style={{ padding: "5px 12px", fontSize: 10, borderRadius: 5, border: "1px solid rgba(255,255,255,0.10)", background: "#1f1f28", color: "#b0b0c4", cursor: "pointer", fontFamily: "inherit", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6, transition: "all 0.15s" }}
@@ -3788,33 +3855,25 @@ function TeamCenterPage() {
 
           {activeTab === "member" ? (
             <div>
-              {/* Member table header */}
+              {/* Member table header — 4 columns */}
               <div style={{
-                display: "grid", gridTemplateColumns: "2.2fr 1fr 1fr .6fr .4fr",
+                display: "grid", gridTemplateColumns: "2.4fr 1fr .7fr .5fr",
                 padding: "10px 0", color: "#505068", fontSize: 9, fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.06)", letterSpacing: 0.4, textTransform: "uppercase",
               }}>
                 <div>成员</div>
-                <div style={{ textAlign: "center" }}>通用积分<br /><span style={{ fontSize: 7, color: "#505068", textTransform: "none", letterSpacing: 0 }}>消耗/上限</span></div>
-                <div style={{ textAlign: "center" }}>专属模型<br /><span style={{ fontSize: 7, color: "#505068", textTransform: "none", letterSpacing: 0 }}>消耗/上限</span></div>
+                <div style={{ textAlign: "center" }}>积分<br /><span style={{ fontSize: 7, color: "#505068", textTransform: "none", letterSpacing: 0 }}>消耗 / 上限</span></div>
                 <div style={{ textAlign: "center" }}>角色</div>
                 <div style={{ textAlign: "center" }}>操作</div>
               </div>
               {/* Member rows */}
               {teamMembers.map((member) => {
-                const avatarBgs = [
-                  "linear-gradient(135deg, #d8a030, #c08020)",
-                  "linear-gradient(135deg, #9070f0, #5898ff)",
-                  "#8868a0",
-                  "linear-gradient(135deg, #1eaa9e, #168880)",
-                  "linear-gradient(135deg, #5898ff, #9070f0)",
-                ];
                 const generalConsumption = Number(member.cost) || 0;
                 const generalLimit = Number(member.limit) || 0;
                 const exclusiveConsumption = member.id === 4 ? 800 : 0;
                 const exclusiveLimit = 2000;
                 return (
                 <div key={member.id} style={{
-                  display: "grid", gridTemplateColumns: "2.2fr 1fr 1fr .6fr .4fr",
+                  display: "grid", gridTemplateColumns: "2.4fr 1fr .7fr .5fr",
                   padding: "14px 0", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.03)",
                   transition: "background 0.1s", opacity: member.empty ? 0.32 : 1,
                 }}
@@ -3832,21 +3891,12 @@ function TeamCenterPage() {
                       {!member.empty && <div style={{ fontSize: 10, color: "#787894", marginTop: 1 }}>{member.account}</div>}
                     </div>
                   </div>
-                  {/* General credits column */}
+                  {/* Credits — single combined column */}
                   <div style={{ textAlign: "center", fontFamily: "'Plus Jakarta Sans'" }}>
                     {member.empty ? "—" : (
                       <>
                         <div style={{ fontSize: 13, fontWeight: 700, color: generalConsumption > 0 ? "#e8c040" : "#b0b0c4" }}>{generalConsumption.toLocaleString()}</div>
-                        <div style={{ fontSize: 9, color: "#505068", marginTop: 2 }}>/ {generalLimit.toLocaleString()}</div>
-                      </>
-                    )}
-                  </div>
-                  {/* Exclusive model credits column */}
-                  <div style={{ textAlign: "center", fontFamily: "'Plus Jakarta Sans'" }}>
-                    {member.empty ? "—" : (
-                      <>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: exclusiveConsumption > 0 ? "#f0a040" : "#b0b0c4" }}>{exclusiveConsumption.toLocaleString()}</div>
-                        <div style={{ fontSize: 9, color: "#505068", marginTop: 2 }}>/ {exclusiveLimit.toLocaleString()}</div>
+                        <div style={{ fontSize: 9, color: "#505068", marginTop: 2 }}>/ {member.role === "管理员" ? "不限" : generalLimit.toLocaleString()}</div>
                       </>
                     )}
                   </div>
@@ -3875,7 +3925,7 @@ function TeamCenterPage() {
               })}
               {/* Placeholder seat row */}
               <div style={{
-                display: "grid", gridTemplateColumns: "2.2fr 1fr 1fr .6fr .4fr",
+                display: "grid", gridTemplateColumns: "2.4fr 1fr .7fr .5fr",
                 padding: "14px 0", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.03)",
                 opacity: 0.32,
               }}>
@@ -4025,90 +4075,80 @@ function TeamCenterPage() {
           )}
       </div>
 
-      {showPointSettingModal && (
-        <>
-          <div onClick={() => setShowPointSettingModal(false)} style={{
-            position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 180,
-          }} />
-          <div className="fade-in" style={{
-            position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
-            width: 770, maxHeight: "88vh", overflow: "hidden", zIndex: 181,
-            borderRadius: 28, background: "#fff", boxShadow: "0 28px 80px rgba(0,0,0,0.25)",
-            border: "1px solid rgba(17,17,17,0.06)",
-          }}>
-            <div style={{ position: "relative", padding: "28px 36px 20px" }}>
-              <div style={{ textAlign: "center", fontSize: 22, fontWeight: 700, color: "#111" }}>积分设置</div>
-              <button onClick={() => setShowPointSettingModal(false)} style={{
-                position: "absolute", right: 26, top: 24, border: "none", background: "transparent",
-                cursor: "pointer", fontSize: 24, color: "#222", lineHeight: 1,
-              }}>×</button>
+      {showPointSettingModal && ReactDOM.createPortal(
+        <div style={{ position: "fixed", inset: 0, zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.55)" }}>
+          <div className="slide-up" style={{ width: 540, maxWidth: "92vw", maxHeight: "85vh", overflowY: "auto", background: "#111117", borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 24px 60px rgba(0,0,0,0.5)", padding: "24px 28px", position: "relative", color: "#f0f0f6" }}>
+            <button onClick={() => setShowPointSettingModal(false)} style={{ position: "absolute", top: 14, right: 14, width: 28, height: 28, borderRadius: "50%", background: "#1f1f28", border: "1px solid rgba(255,255,255,0.06)", color: "#787894", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+            <h3 style={{ fontSize: 17, fontWeight: 700, textAlign: "center", marginBottom: 3, color: "#f0f0f6" }}>积分额度上限设置</h3>
+            <div style={{ fontSize: 12, color: "#787894", textAlign: "center", marginBottom: 16 }}>为每个席位配置月度积分上限，每月重置</div>
+            {/* Tabs: 通用积分 | 专属模型积分 */}
+            <div style={{ display: "flex", gap: 0, borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 14 }}>
+              {[{ k: 0, l: "通用积分", dot: "linear-gradient(135deg, #2ee8d8, #5898ff)" }, { k: 1, l: "专属模型积分", dot: "linear-gradient(135deg, #f0a040, #e8c040)" }].map(t => (
+                <button key={t.k} onClick={() => setQuotaTab(t.k)} style={{ padding: "8px 14px", fontSize: 11, fontWeight: quotaTab === t.k ? 700 : 500, color: quotaTab === t.k ? "#f0f0f6" : "#787894", cursor: "pointer", borderBottom: quotaTab === t.k ? "2px solid #5898ff" : "2px solid transparent", background: "transparent", border: "none", borderBottom: quotaTab === t.k ? "2px solid #5898ff" : "2px solid transparent", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5, transition: "all 0.15s" }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: t.dot, display: "inline-block" }} />{t.l}
+                </button>
+              ))}
             </div>
-
-            <div style={{ padding: "0 36px 28px", maxHeight: "calc(88vh - 84px)", overflowY: "auto" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
-                <input
-                  value={batchPointValue}
-                  onChange={(e) => setBatchPointValue(e.target.value.replace(/[^\d]/g, ""))}
-                  style={{
-                    width: 194, height: 42, borderRadius: 12, border: "1px solid #E5E6EB",
-                    background: "#F7F8FA", padding: "0 16px", fontSize: 16, color: "#1D2129", outline: "none",
-                  }}
-                />
-                <button onClick={applyBatchPoints} style={{
-                  border: "none", background: "transparent", cursor: "pointer",
-                  color: "#1D2129", fontSize: 16, fontWeight: 500,
-                }}>批量填充</button>
-              </div>
-              <div style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                paddingBottom: 18, marginBottom: 6, borderBottom: "1px solid #EEF0F3",
-                fontSize: 17, color: "#1D2129",
-              }}>
-                <span>团队席位：{activeMembers.length}位</span>
-                <span>剩余总积分：{totalPoints}</span>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 18, paddingTop: 8 }}>
+            {/* Tab 0: 通用积分 */}
+            {quotaTab === 0 && (
+              <div>
+                <div style={{ padding: "10px 12px", borderRadius: 5, background: "#18181f", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 14 }}>
+                  <div style={{ fontSize: 10, color: "#787894", marginBottom: 2 }}>通用积分总额</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#f0f0f6" }}>266,183</div>
+                </div>
                 {activeMembers.map((member) => (
-                  <div key={member.id} style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18,
-                  }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-                      <div style={{
-                        width: 40, height: 40, borderRadius: "50%",
-                        background: `url(https://picsum.photos/seed/team-member-${member.id}/80/80) center/cover no-repeat`,
-                        border: "1px solid #E5E6EB", flexShrink: 0,
-                      }} />
-                      <div style={{ fontSize: 16, color: "#1D2129", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {member.name}
-                      </div>
+                  <div key={member.id} style={{ display: "flex", alignItems: "center", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", gap: 10 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: "50%", background: avatarBgs[member.id - 1] || "#787894", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{member.name.substring(0, 1)}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#f0f0f6" }}>{member.name}</div>
+                      <div style={{ fontSize: 10, color: "#787894" }}>本月已用 <b style={{ color: "#2ee8d8" }}>{member.cost === "0" ? "0" : Number(member.cost).toLocaleString()}</b> 积分</div>
                     </div>
-                    <input
-                      value={memberPointValues[member.id] || ""}
-                      onChange={(e) => setMemberPointValues((prev) => ({ ...prev, [member.id]: e.target.value.replace(/[^\d]/g, "") }))}
-                      style={{
-                        width: 196, height: 42, borderRadius: 12, border: "1px solid #E5E6EB",
-                        background: "#F7F8FA", padding: "0 16px", fontSize: 16, color: "#1D2129", outline: "none",
-                        flexShrink: 0,
-                      }}
-                    />
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <input value={memberPointValues[member.id] || ""} onChange={(e) => setMemberPointValues(prev => ({ ...prev, [member.id]: e.target.value.replace(/[^\d]/g, "") }))} style={{ width: 64, padding: "8px", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 5, textAlign: "center", fontSize: 14, fontWeight: 700, color: "#f0f0f6", background: "#1f1f28", outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
+                      <span style={{ fontSize: 10, color: "#787894" }}>积分</span>
+                    </div>
                   </div>
                 ))}
               </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 34 }}>
-                <button onClick={() => setShowPointSettingModal(false)} style={{
-                  height: 56, borderRadius: 18, border: "none", cursor: "pointer",
-                  background: "#F1F2F4", color: "#1D2129", fontSize: 16, fontWeight: 500,
-                }}>取消</button>
-                <button onClick={confirmPointSetting} style={{
-                  height: 56, borderRadius: 18, border: "none", cursor: "pointer",
-                  background: "#111", color: "#fff", fontSize: 16, fontWeight: 600,
-                }}>确定</button>
+            )}
+            {/* Tab 1: 专属模型积分 */}
+            {quotaTab === 1 && (
+              <div>
+                <div style={{ padding: "8px 12px", borderRadius: 5, marginBottom: 12, fontSize: 10, display: "flex", alignItems: "center", gap: 6, background: "rgba(240,160,64,0.06)", border: "1px solid rgba(240,160,64,0.12)", color: "#a06800" }}>🔒 为每个成员分配各模型的专属积分额度，仅限对应模型使用</div>
+                {/* Model header */}
+                <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", padding: "8px 0", fontSize: 10, fontWeight: 600, color: "#787894", borderBottom: "1px solid rgba(255,255,255,0.06)", gap: 6 }}>
+                  <div>成员</div>
+                  <div style={{ textAlign: "center" }}>Seedance 2.0<br /><span style={{ fontSize: 8, fontWeight: 400, color: "#505068" }}>总额 12,000</span></div>
+                  <div style={{ textAlign: "center" }}>Kling 3.0<br /><span style={{ fontSize: 8, fontWeight: 400, color: "#505068" }}>总额 8,500</span></div>
+                  <div style={{ textAlign: "center" }}>Kling O3<br /><span style={{ fontSize: 8, fontWeight: 400, color: "#505068" }}>总额 6,200</span></div>
+                </div>
+                {activeMembers.map((member) => {
+                  const usedData = member.id === 2 ? [800, 0, 0] : member.id === 3 ? [400, 0, 0] : [0, 0, 0];
+                  return (
+                    <div key={member.id} style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", padding: "10px 0", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.03)", gap: 6 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: avatarBgs[member.id - 1] || "#787894", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#fff" }}>{member.name.substring(0, 1)}</div>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: "#f0f0f6" }}>{member.name}</span>
+                      </div>
+                      {[500, 300, 200].map((val, ci) => (
+                        <div key={ci} style={{ textAlign: "center" }}>
+                          <input defaultValue={val} style={{ width: 52, padding: "6px 4px", border: "1px solid rgba(240,160,64,0.15)", borderRadius: 5, textAlign: "center", fontSize: 12, fontWeight: 700, color: "#f0f0f6", background: "#1f1f28", outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
+                          <div style={{ fontSize: 8, color: usedData[ci] > 0 ? "#a06800" : "#505068", marginTop: 2 }}>已用 {usedData[ci]}</div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
+            )}
+            {/* Actions */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 16 }}>
+              <button onClick={() => setShowPointSettingModal(false)} style={{ padding: "12px", borderRadius: 5, background: "#1f1f28", border: "1px solid rgba(255,255,255,0.06)", color: "#b0b0c4", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>取消</button>
+              <button onClick={confirmPointSetting} style={{ padding: "12px", borderRadius: 5, background: "#f0f0f6", border: "none", color: "#111117", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>确定</button>
             </div>
           </div>
-        </>
+        </div>,
+        document.body
       )}
 
       {showSecurityModal && (
