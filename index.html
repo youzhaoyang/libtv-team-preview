@@ -488,7 +488,7 @@ const HomeRecentCard = memo(function HomeRecentCard({ project, onClick, isCreate
 });
 
 function HomePage() {
-  const { setPage, openCanvas, showToast, openModal } = useContext(AppContext);
+  const { setPage, openCanvas, showToast, openModal, openGlobalHoverCard, scheduleGlobalHoverCardClose } = useContext(AppContext);
   const recentProjects = [INITIAL_PERSONAL[1], INITIAL_PERSONAL[0], INITIAL_TEAM[0], INITIAL_TEAM[1]];
   const [showUserHoverCard, setShowUserHoverCard] = useState(false);
   const userHoverHideTimerRef = useRef(null);
@@ -501,15 +501,12 @@ function HomePage() {
   }, []);
   const openUserHoverCard = useCallback(() => {
     clearUserHoverHideTimer();
-    setShowUserHoverCard(true);
+    openGlobalHoverCard();
   }, [clearUserHoverHideTimer]);
   const scheduleUserHoverCardClose = useCallback(() => {
     clearUserHoverHideTimer();
-    userHoverHideTimerRef.current = setTimeout(() => {
-      setShowUserHoverCard(false);
-      userHoverHideTimerRef.current = null;
-    }, 2300);
-  }, [clearUserHoverHideTimer]);
+    scheduleGlobalHoverCardClose();
+  }, [clearUserHoverHideTimer, scheduleGlobalHoverCardClose]);
 
   useEffect(() => () => clearUserHoverHideTimer(), [clearUserHoverHideTimer]);
 
@@ -670,7 +667,7 @@ function HomePage() {
 // 页面一：项目列表（US-01 + US-02）
 // ============================================================
 function ProjectListPage() {
-  const { setPage, openCanvas, showToast, openModal } = useContext(AppContext);
+  const { setPage, openCanvas, showToast, openModal, openGlobalHoverCard, scheduleGlobalHoverCardClose } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState("personal");
   const [personalProjects, setPersonalProjects] = useState(INITIAL_PERSONAL);
   const [teamProjects, setTeamProjects] = useState(INITIAL_TEAM);
@@ -783,15 +780,12 @@ function ProjectListPage() {
   }, []);
   const openUserHoverCard = useCallback(() => {
     clearUserHoverHideTimer();
-    setShowUserHoverCard(true);
-  }, [clearUserHoverHideTimer]);
+    openGlobalHoverCard();
+  }, [clearUserHoverHideTimer, openGlobalHoverCard]);
   const scheduleUserHoverCardClose = useCallback(() => {
     clearUserHoverHideTimer();
-    userHoverHideTimerRef.current = setTimeout(() => {
-      setShowUserHoverCard(false);
-      userHoverHideTimerRef.current = null;
-    }, 2300);
-  }, [clearUserHoverHideTimer]);
+    scheduleGlobalHoverCardClose();
+  }, [clearUserHoverHideTimer, scheduleGlobalHoverCardClose]);
 
   useEffect(() => () => clearUserHoverHideTimer(), [clearUserHoverHideTimer]);
 
@@ -1699,7 +1693,7 @@ const HistoryPanel = memo(function HistoryPanel({ onClose, showToast }) {
 });
 
 function CanvasPage() {
-  const { setPage, canvasEntryMode, showToast, openModal } = useContext(AppContext);
+  const { setPage, canvasEntryMode, showToast, openModal, openGlobalHoverCard, scheduleGlobalHoverCardClose } = useContext(AppContext);
   const isBlankCanvas = canvasEntryMode === "blank";
   const [nodes, setNodes] = useState(() => (isBlankCanvas ? [] : NODES_INITIAL));
   const [selectedNode, setSelectedNode] = useState(null);
@@ -1856,15 +1850,12 @@ function CanvasPage() {
   }, []);
   const openUserHoverCard = useCallback(() => {
     clearUserHoverHideTimer();
-    setShowUserHoverCard(true);
-  }, [clearUserHoverHideTimer]);
+    openGlobalHoverCard();
+  }, [clearUserHoverHideTimer, openGlobalHoverCard]);
   const scheduleUserHoverCardClose = useCallback(() => {
     clearUserHoverHideTimer();
-    userHoverHideTimerRef.current = setTimeout(() => {
-      setShowUserHoverCard(false);
-      userHoverHideTimerRef.current = null;
-    }, 2300);
-  }, [clearUserHoverHideTimer]);
+    scheduleGlobalHoverCardClose();
+  }, [clearUserHoverHideTimer, scheduleGlobalHoverCardClose]);
 
   const beginCanvasDrag = useCallback((event, payload) => {
     if (event.button !== 0) return;
@@ -5023,6 +5014,13 @@ function App() {
   const [checkoutTier, setCheckoutTier] = useState("尊享版");
   // 身份切换气泡
   const [showIdentityBubble, setShowIdentityBubble] = useState(false);
+  // 全局头像 hover 卡片
+  const [globalHoverCard, setGlobalHoverCard] = useState(false);
+  const globalHoverTimerRef = useRef(null);
+  const clearGlobalHoverTimer = useCallback(() => { if (globalHoverTimerRef.current) { clearTimeout(globalHoverTimerRef.current); globalHoverTimerRef.current = null; } }, []);
+  const openGlobalHoverCard = useCallback(() => { clearGlobalHoverTimer(); setGlobalHoverCard(true); }, [clearGlobalHoverTimer]);
+  const scheduleGlobalHoverCardClose = useCallback(() => { clearGlobalHoverTimer(); globalHoverTimerRef.current = setTimeout(() => { setGlobalHoverCard(false); globalHoverTimerRef.current = null; }, 2300); }, [clearGlobalHoverTimer]);
+  useEffect(() => () => clearGlobalHoverTimer(), [clearGlobalHoverTimer]);
 
   const showToast = useCallback((message, type) => {
     setToast({ message, type, key: Date.now() });
@@ -5041,12 +5039,28 @@ function App() {
   }, []);
 
   return (
-    <AppContext.Provider value={{ setPage, openCanvas, canvasEntryMode, showToast, openModal }}>
+    <AppContext.Provider value={{ setPage, openCanvas, canvasEntryMode, showToast, openModal, openGlobalHoverCard, scheduleGlobalHoverCardClose }}>
       {page === "home" && <HomePage />}
       {page === "list" && <ProjectListPage />}
       {page === "canvas" && <CanvasPage />}
       {page === "teamCenter" && <TeamCenterPage />}
       {toast && <Toast key={toast.key} message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+      {/* 全局浮动头像 + Hover 卡片 — 始终在右上角 */}
+      {globalHoverCard && ReactDOM.createPortal(
+        <div style={{ position: "fixed", top: 52, right: 12, zIndex: 8000 }}
+          onMouseEnter={openGlobalHoverCard}
+          onMouseLeave={scheduleGlobalHoverCardClose}
+        >
+          <UserHoverCard
+            showToast={showToast}
+            onMouseEnter={openGlobalHoverCard}
+            onMouseLeave={scheduleGlobalHoverCardClose}
+            onOpenTeamCenter={() => { setGlobalHoverCard(false); setPage("teamCenter"); }}
+          />
+        </div>,
+        document.body
+      )}
 
       {/* 身份切换气泡提示 */}
       <IdentityBubble show={showIdentityBubble} onClose={() => setShowIdentityBubble(false)} />
