@@ -1533,7 +1533,7 @@ const GROUP_PRESET = {
 // HistoryPanel — 历史资产浮层（1:1 还原截图）
 // ============================================================
 const HistoryPanel = memo(function HistoryPanel({ onClose, showToast }) {
-  const [histOwner, setHistOwner] = useState("all");
+  const [histScope, setHistScope] = useState("personal"); // 第一层级：personal | team
   const [histType, setHistType] = useState("image");
   const [histZoom, setHistZoom] = useState(100);
   const [hoveredThumb, setHoveredThumb] = useState(null);
@@ -1545,11 +1545,10 @@ const HistoryPanel = memo(function HistoryPanel({ onClose, showToast }) {
     { name: "沈南栀", desc: "品牌内容 · 28 项资产" },
     { name: "许照野", desc: "运营投放 · 9 项资产" },
   ];
-  const ownerTabs = [
-    { k: "all", l: "全部" }, { k: "personal", l: "个人资产" }, { k: "team", l: "团队资产" }, { k: "member", l: "成员资产" },
-  ];
   const typeTabs = [
-    { k: "image", l: "图片历史", c: 1202 }, { k: "video", l: "视频历史", c: 122 }, { k: "audio", l: "音频历史", c: 2 },
+    { k: "image", l: "图片历史", c: histScope === "personal" ? 294 : 1202 },
+    { k: "video", l: "视频历史", c: histScope === "personal" ? 38 : 122 },
+    { k: "audio", l: "音频历史", c: histScope === "personal" ? 2 : 8 },
   ];
   // 使用 picsum 占位图模拟真实照片 grid
   const thumbs = Array.from({ length: 12 }, (_, i) => `https://picsum.photos/seed/hist${i}/300/300`);
@@ -1575,19 +1574,20 @@ const HistoryPanel = memo(function HistoryPanel({ onClose, showToast }) {
           >✕</button>
         </div>
       </div>
-      {/* Row 2: 归属 tab pills + 批量操作 */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px 12px", flexShrink: 0 }}>
-        <div style={{ display: "flex", gap: 6, position: "relative" }}>
-          {ownerTabs.map(t => (
-            <button key={t.k} onClick={() => { setHistOwner(t.k); if (t.k === "member") setShowMemberPicker(p => !p); else setShowMemberPicker(false); }} style={{
-              padding: "6px 16px", borderRadius: 20, fontSize: 12, fontWeight: histOwner === t.k ? 600 : 400, cursor: "pointer",
-              border: histOwner === t.k ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(255,255,255,0.08)",
-              background: histOwner === t.k ? "rgba(255,255,255,0.08)" : "transparent",
-              color: histOwner === t.k ? "#e2e2ec" : "#8585a0", transition: "all 0.15s",
-            }}>{t.l}{t.k === "member" ? " ⌄" : ""}</button>
+      {/* Row 2: 第一层级 Scope Tabs（个人资产 / 团队资产）+ 批量操作 */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px 0", flexShrink: 0, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ display: "flex", gap: 0 }}>
+          {[{ k: "personal", l: "个人资产" }, { k: "team", l: "团队资产" }].map(t => (
+            <button key={t.k} onClick={() => { setHistScope(t.k); setShowMemberPicker(false); setSelectedHistMember(null); }} style={{
+              padding: "10px 22px", fontSize: 14, fontWeight: histScope === t.k ? 700 : 500, cursor: "pointer",
+              borderBottom: histScope === t.k ? "2px solid #2ee8d8" : "2px solid transparent",
+              background: "transparent", border: "none",
+              borderBottom: histScope === t.k ? "2px solid #2ee8d8" : "2px solid transparent",
+              color: histScope === t.k ? "#f0f0f6" : "#505068", transition: "all 0.15s", fontFamily: "inherit",
+            }}>{t.l}</button>
           ))}
           {/* 成员选择器下拉 */}
-          {showMemberPicker && histOwner === "member" && (
+          {showMemberPicker && histScope === "team" && (
             <div className="fade-in" style={{ position: "absolute", top: "calc(100% + 8px)", left: 180, width: 300, borderRadius: 14, background: "rgba(22,22,32,0.98)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 16px 48px rgba(0,0,0,0.6)", zIndex: 100, padding: "16px 0 8px" }}>
               <div style={{ padding: "0 16px 8px", fontSize: 14, fontWeight: 700, color: "#e2e2ec" }}>选择指定成员</div>
               <div style={{ padding: "0 16px 12px", fontSize: 11, color: "#555570", lineHeight: 1.5 }}>筛选成员资产时，可进一步限定到某位成员的历史结果。</div>
@@ -1616,14 +1616,26 @@ const HistoryPanel = memo(function HistoryPanel({ onClose, showToast }) {
         </div>
         <button style={{ padding: "5px 14px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#e2e2ec", fontSize: 12, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>☰ 批量操作</button>
       </div>
-      {/* Row 3: 历史类型 + 筛选 */}
-      <div style={{ display: "flex", alignItems: "center", padding: "0 24px 10px", gap: 20, flexShrink: 0, borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+      {/* Row 3: 历史类型 + 成员筛选(团队) + 筛选 */}
+      <div style={{ display: "flex", alignItems: "center", padding: "8px 24px 10px", gap: 16, flexShrink: 0, borderBottom: "1px solid rgba(255,255,255,0.04)", position: "relative" }}>
+        <span style={{ fontSize: 11, color: "#505068", flexShrink: 0 }}>历史类型</span>
         {typeTabs.map(t => (
           <button key={t.k} onClick={() => setHistType(t.k)} style={{
-            fontSize: 13, fontWeight: histType === t.k ? 700 : 400, color: histType === t.k ? "#e2e2ec" : "#555570",
-            border: "none", background: "transparent", cursor: "pointer", padding: 0,
+            padding: "4px 12px", borderRadius: 16, fontSize: 12, fontWeight: histType === t.k ? 600 : 400, cursor: "pointer",
+            border: histType === t.k ? "1px solid rgba(59,130,246,0.4)" : "1px solid rgba(255,255,255,0.06)",
+            background: histType === t.k ? "rgba(59,130,246,0.08)" : "transparent",
+            color: histType === t.k ? "#5898ff" : "#787894", transition: "all 0.15s", fontFamily: "inherit",
           }}>{t.l}({t.c})</button>
         ))}
+        {/* 团队模式下显示成员筛选 */}
+        {histScope === "team" && (
+          <button onClick={() => setShowMemberPicker(p => !p)} style={{
+            padding: "4px 12px", borderRadius: 16, fontSize: 12, fontWeight: selectedHistMember ? 600 : 400, cursor: "pointer",
+            border: selectedHistMember ? "1px solid rgba(59,130,246,0.4)" : "1px solid rgba(255,255,255,0.06)",
+            background: selectedHistMember ? "rgba(59,130,246,0.08)" : "transparent",
+            color: selectedHistMember ? "#5898ff" : "#787894", transition: "all 0.15s", fontFamily: "inherit",
+          }}>{selectedHistMember || "成员筛选"} ⌄</button>
+        )}
         <div style={{ marginLeft: "auto", display: "flex", gap: 10, alignItems: "center", fontSize: 12, color: "#555570" }}>
           <span style={{ cursor: "pointer" }}>按时间筛选 ⌄</span>
           <span style={{ color: "rgba(255,255,255,0.06)" }}>|</span>
