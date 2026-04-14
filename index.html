@@ -1517,6 +1517,7 @@ const UserHoverCard = memo(function UserHoverCard({ onOpenTeamCenter, onMouseEnt
   const { openModal } = useContext(AppContext);
   const [showSwitcher, setShowSwitcher] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState("team1");
+  const [showCycleQuotaTip, setShowCycleQuotaTip] = useState(false);
   const menuItems = [
     { icon: "👥", label: "团队设置", action: onOpenTeamCenter },
     { icon: "📋", label: "订阅与开发票", action: () => showToast("订阅与开发票（演示）", "info") },
@@ -1530,6 +1531,21 @@ const UserHoverCard = memo(function UserHoverCard({ onOpenTeamCenter, onMouseEnt
     { id: "team2", section: "team", name: "果核里的宇宙", badge: "团队尊享版", badgeColor: "var(--color-brand-300)" },
     { id: "team3", section: "team", name: "电商广告小组", badge: "团队免费版", badgeColor: "var(--fg-subtle)" },
   ];
+
+  /*
+   * 本周期额度 — 功能逻辑（与展示对齐）
+   * 1) 展示：已消耗额度 / 最高上限额度（分子=当前周期内已扣减累计，分母=当期可用上限）。
+   * 2) 最高上限：来自管理员在「积分额度」中的配置（每席周期上限、团队池、重置周期等），服务端解析为当前团队当期的 cap。
+   * 3) 已消耗：当前计费周期内、该额度维度下的扣减流水合计（与账户「积分余额」可不同维度）。
+   * 4) 进度条：min(100%, 已消耗/上限×100%)；上限≤0 时按 0% 展示。
+   * 5) 问号提示中的恢复日：与配置/账单周期一致（演示为占位文案）。
+   */
+  const adminCycleQuotaCap = 2000;
+  const cycleQuotaUsed = 2000;
+  const cycleQuotaResetHint = "下月x日";
+  const cycleQuotaCap = Math.max(0, adminCycleQuotaCap);
+  const cycleQuotaProgressPct = cycleQuotaCap > 0 ? Math.min(100, (cycleQuotaUsed / cycleQuotaCap) * 100) : 0;
+  const fmtPts = (n) => Number(n).toLocaleString("zh-CN");
 
   return (
     <div className="fade-in" style={{
@@ -1622,26 +1638,68 @@ const UserHoverCard = memo(function UserHoverCard({ onOpenTeamCenter, onMouseEnt
             <button style={{ border: "none", background: "transparent", color: "#FFF0D1", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>查看更多</button>
           </div>
         </div>
-        {/* 积分 + 存储 */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
-          <div style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", padding: "14px 14px", background: "rgba(255,255,255,0.015)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", color: "rgba(255,255,255,0.5)", fontSize: 11, marginBottom: 16 }}>
-              <span>积分余额</span><button style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.6)", cursor: "pointer", fontSize: 11 }}>充值</button>
+        {/* 积分（全宽）+ 本周期额度 */}
+        <div style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", padding: "12px 14px", background: "rgba(255,255,255,0.015)", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12 }}>
+            <button type="button" style={{ border: "none", background: "transparent", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0, textAlign: "left", fontFamily: "inherit" }}
+              onClick={() => showToast("积分明细（演示）", "info")}
+            >
+              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", fontWeight: 500, flexShrink: 0 }}>积分余额</span>
+              <span style={{ display: "flex", alignItems: "baseline", gap: 3, flexShrink: 0 }}>
+                <span style={{ fontSize: 22, fontWeight: 800, color: "var(--fg-on-emphasis)", fontFamily: "Inter, sans-serif", lineHeight: 1 }}>762</span>
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>点</span>
+                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.28)", marginLeft: 1 }}>›</span>
+              </span>
+            </button>
+            <button type="button" onClick={() => showToast("充值（演示）", "info")} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.6)", cursor: "pointer", fontSize: 11, flexShrink: 0 }}>充值</button>
+          </div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#2ee8d8", fontWeight: 600 }}>
+                本周期额度
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-describedby="cycle-quota-tip"
+                  onMouseEnter={() => setShowCycleQuotaTip(true)}
+                  onMouseLeave={() => setShowCycleQuotaTip(false)}
+                  onFocus={() => setShowCycleQuotaTip(true)}
+                  onBlur={() => setShowCycleQuotaTip(false)}
+                  style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+                >
+                  <span style={{ width: 15, height: 15, borderRadius: "50%", border: "1px solid rgba(46,232,216,0.35)", color: "rgba(255,255,255,0.45)", fontSize: 10, fontWeight: 600, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "help", lineHeight: 1, background: "rgba(255,255,255,0.04)" }}>?</span>
+                  {showCycleQuotaTip && (
+                    <span id="cycle-quota-tip" role="tooltip" style={{
+                      position: "absolute", left: "50%", bottom: "calc(100% + 8px)", transform: "translateX(-50%)",
+                      width: 232, padding: "10px 12px", borderRadius: 8, zIndex: 400,
+                      background: "rgba(36,36,44,0.98)", border: "1px solid rgba(255,255,255,0.12)",
+                      boxShadow: "0 10px 28px rgba(0,0,0,0.45)", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.92)",
+                      lineHeight: 1.5, textAlign: "left", whiteSpace: "normal", pointerEvents: "none",
+                    }}>
+                      {`管理员已设定周期额度${cycleQuotaResetHint}恢复`}
+                    </span>
+                  )}
+                </span>
+              </span>
+              <span style={{ fontSize: 12, fontFamily: "Inter, sans-serif", whiteSpace: "nowrap" }} title={`已消耗 ${fmtPts(cycleQuotaUsed)} / 上限 ${fmtPts(cycleQuotaCap)}（上限来自管理员积分额度配置）`}>
+                <span style={{ fontWeight: 600, color: "#2ee8d8" }}>{fmtPts(cycleQuotaUsed)}</span>
+                <span style={{ fontWeight: 500, color: "rgba(255,255,255,0.38)" }}>/{fmtPts(cycleQuotaCap)}</span>
+              </span>
             </div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-              <span style={{ fontSize: 24, fontWeight: 800, color: "var(--fg-on-emphasis)", fontFamily: "Inter, sans-serif" }}>762</span>
-              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.6)" }}>点</span>
-              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginLeft: 2 }}>›</span>
+            <div style={{ height: 5, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+              <div style={{ width: `${cycleQuotaProgressPct}%`, height: "100%", borderRadius: 999, background: "linear-gradient(90deg, #2ee8d8, #5af0e0)" }} />
             </div>
           </div>
-          <div style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", padding: "14px 14px", background: "rgba(255,255,255,0.015)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", color: "rgba(255,255,255,0.5)", fontSize: 11, marginBottom: 16 }}>
-              <span>存储空间</span><button style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.6)", cursor: "pointer", fontSize: 11 }}>管理资产</button>
-            </div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-              <span style={{ fontSize: 24, fontWeight: 800, color: "var(--fg-on-emphasis)", fontFamily: "Inter, sans-serif" }}>5G</span>
-              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>/50G</span>
-            </div>
+        </div>
+        {/* 存储管理（本周期额度下方） */}
+        <div style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", padding: "12px 14px", background: "rgba(255,255,255,0.015)", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", fontWeight: 500 }}>存储空间</span>
+            <button type="button" onClick={() => showToast("管理资产（演示）", "info")} style={{ border: "none", background: "transparent", color: "rgba(255,255,255,0.72)", cursor: "pointer", fontSize: 11, fontWeight: 500 }}>管理资产</button>
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 4, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 22, fontWeight: 800, color: "var(--fg-on-emphasis)", fontFamily: "Inter, sans-serif", lineHeight: 1.2 }}>2.2G</span>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.42)", fontWeight: 500 }}>/ 1550G</span>
           </div>
         </div>
         {/* 菜单列表 */}
