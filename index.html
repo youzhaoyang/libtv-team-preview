@@ -4771,17 +4771,19 @@ function TeamCenterPage() {
 // ============================================================
 // 可复用子组件：QR支付区 + 席位选择器
 // ============================================================
-const QRPayBlock = memo(function QRPayBlock({ total, originalTotal, label }) {
+const QRPayBlock = memo(function QRPayBlock({ total, originalTotal, label, compact = false, containerStyle, qrBoxSize = 110 }) {
   return (
-    <div style={{ display: "flex", gap: 20, alignItems: "flex-start", borderTop: "1px dashed rgba(255,255,255,0.08)", paddingTop: 20, marginTop: 16 }}>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 10, color: "var(--fg-subtle)", marginBottom: 4 }}>{label || "应付金额"}</div>
-        <div style={{ fontSize: 32, fontWeight: 800, color: "var(--fg-brand)", fontFamily: "Inter, sans-serif" }}>{total}<sub style={{ fontSize: 13, fontWeight: 400, color: "var(--fg-muted)" }}>元</sub></div>
-        {originalTotal && <div style={{ fontSize: 10, color: "#3a3a50", textDecoration: "line-through" }}>原价：{originalTotal}元</div>}
-      </div>
-      <div style={{ textAlign: "center" }}>
-        <div style={{ width: 110, height: 110, borderRadius: 8, background: "var(--color-neutral-0)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6 }}>
-          <div style={{ width: 90, height: 90, background: "repeating-conic-gradient(var(--bg-page) 0% 25%, var(--color-neutral-0) 0% 50%) 0 0/9px 9px", borderRadius: 4 }} />
+    <div style={{ display: "flex", gap: compact ? 0 : 20, alignItems: "flex-start", borderTop: compact ? "none" : "1px dashed rgba(255,255,255,0.08)", paddingTop: compact ? 0 : 20, marginTop: compact ? 0 : 16, ...containerStyle }}>
+      {!compact && (
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 10, color: "var(--fg-subtle)", marginBottom: 4 }}>{label || "应付金额"}</div>
+          <div style={{ fontSize: 32, fontWeight: 800, color: "var(--fg-brand)", fontFamily: "Inter, sans-serif" }}>{total}<sub style={{ fontSize: 13, fontWeight: 400, color: "var(--fg-muted)" }}>元</sub></div>
+          {originalTotal && <div style={{ fontSize: 10, color: "#3a3a50", textDecoration: "line-through" }}>原价：{originalTotal}元</div>}
+        </div>
+      )}
+      <div style={{ textAlign: "center", width: compact ? "100%" : "auto" }}>
+        <div style={{ width: qrBoxSize, height: qrBoxSize, borderRadius: 8, background: "var(--color-neutral-0)", display: "flex", alignItems: "center", justifyContent: "center", margin: compact ? "0 auto 8px" : "0 0 6px" }}>
+          <div style={{ width: Math.round(qrBoxSize * 0.82), height: Math.round(qrBoxSize * 0.82), background: "repeating-conic-gradient(var(--bg-page) 0% 25%, var(--color-neutral-0) 0% 50%) 0 0/9px 9px", borderRadius: 4 }} />
         </div>
         <div style={{ fontSize: 9, color: "var(--fg-subtle)", lineHeight: 1.6 }}>📱 请扫码支付<br /><span style={{ color: "var(--fg-brand)", textDecoration: "underline", cursor: "pointer" }}>《LiblibAI会员协议》</span><br /><span style={{ color: "var(--fg-brand)", textDecoration: "underline", cursor: "pointer" }}>《团队账号购买与使用协议》</span></div>
       </div>
@@ -4789,15 +4791,21 @@ const QRPayBlock = memo(function QRPayBlock({ total, originalTotal, label }) {
   );
 });
 
-const SeatSelector = memo(function SeatSelector({ value, onChange, min = 2, max = 200 }) {
+const SeatSelector = memo(function SeatSelector({ value, onChange, min = 2, max = 200, seatWord = false, tall = false }) {
+  const h = tall ? 36 : 32;
+  const wBtn = tall ? 36 : 32;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, overflow: "hidden" }}>
-        <button onClick={() => onChange(Math.max(min, value - 1))} style={{ width: 32, height: 32, border: "none", background: "#21212f", color: "var(--fg-muted)", fontSize: 14, cursor: "pointer" }}>−</button>
-        <input value={value} readOnly style={{ width: 44, height: 32, border: "none", background: "#14141e", color: "var(--fg-default)", textAlign: "center", fontSize: 12, fontWeight: 600, fontFamily: "Inter, sans-serif", outline: "none" }} />
-        <button onClick={() => onChange(Math.min(max, value + 1))} style={{ width: 32, height: 32, border: "none", background: "#21212f", color: "var(--fg-muted)", fontSize: 14, cursor: "pointer" }}>+</button>
+      <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, overflow: "hidden", background: "#1a1a22" }}>
+        <button type="button" onClick={() => onChange(Math.max(min, value - 1))} style={{ width: wBtn, height: h, border: "none", background: "#252530", color: "var(--fg-muted)", fontSize: 16, cursor: "pointer", lineHeight: 1 }}>−</button>
+        {seatWord ? (
+          <div style={{ minWidth: 76, height: h, display: "flex", alignItems: "center", justifyContent: "center", background: "#14141e", color: "var(--fg-default)", fontSize: 12, fontWeight: 700, fontFamily: "Inter, sans-serif", padding: "0 6px", borderLeft: "1px solid rgba(255,255,255,0.06)", borderRight: "1px solid rgba(255,255,255,0.06)" }}>{value} 席位</div>
+        ) : (
+          <input value={value} readOnly style={{ width: 44, height: h, border: "none", background: "#14141e", color: "var(--fg-default)", textAlign: "center", fontSize: 12, fontWeight: 600, fontFamily: "Inter, sans-serif", outline: "none" }} />
+        )}
+        <button type="button" onClick={() => onChange(Math.min(max, value + 1))} style={{ width: wBtn, height: h, border: "none", background: "#252530", color: "var(--fg-muted)", fontSize: 16, cursor: "pointer", lineHeight: 1 }}>+</button>
       </div>
-      <span style={{ fontSize: 11, color: "var(--fg-subtle)" }}>席位</span>
+      {!seatWord && <span style={{ fontSize: 11, color: "var(--fg-subtle)" }}>席位</span>}
     </div>
   );
 });
@@ -4805,20 +4813,20 @@ const SeatSelector = memo(function SeatSelector({ value, onChange, min = 2, max 
 // ============================================================
 // ModalShell — 深色全屏弹窗壳（复用于所有新增弹窗）
 // ============================================================
-const ModalShell = memo(function ModalShell({ opened, onClose, width, children, maxHeight, noPad, panelStyle, closeBtnStyle }) {
+const ModalShell = memo(function ModalShell({ opened, onClose, width, children, maxHeight, noPad, panelStyle, closeBtnStyle, contentStyle }) {
   if (!opened) return null;
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(4,4,8,0.88)", backdropFilter: "blur(6px)" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(6,7,10,0.92)", backdropFilter: "blur(8px)" }}>
       <div className="slide-up" style={{
-        width: width || 580, maxWidth: "96vw", maxHeight: maxHeight || "90vh", background: "#0f0f17", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 24px 60px rgba(0,0,0,0.6)", overflow: "hidden", display: "flex", flexDirection: "column", position: "relative",
+        width: width || 580, maxWidth: "98vw", maxHeight: maxHeight || "90vh", background: "#0b0c0e", borderRadius: 14, border: "1px solid #252830",
+        boxShadow: "0 24px 60px rgba(0,0,0,0.65)", overflow: "hidden", display: "flex", flexDirection: "column", position: "relative",
         ...panelStyle,
       }}>
         <button onClick={onClose} style={{
           position: "absolute", top: 14, right: 14, zIndex: 10, width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "var(--fg-subtle)", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
           ...closeBtnStyle,
         }}>✕</button>
-        <div style={{ flex: 1, overflowY: "auto", padding: noPad ? 0 : "28px 32px" }}>{children}</div>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: noPad ? 0 : "28px 32px", ...contentStyle }}>{children}</div>
       </div>
     </div>
   );
@@ -4828,147 +4836,198 @@ const ModalShell = memo(function ModalShell({ opened, onClose, width, children, 
 // S2: MembershipModal — 会员中心
 // ============================================================
 const TIERS = [
-  { name: "专业版", icon: "💎", dot: "var(--color-brand-400)", price: 559, orig: 699, unit: "53/月/人起，2.96元/100积分",
+  { name: "专业版", icon: "💎", dot: "var(--color-brand-400)", price: 559, orig: 699, unit: "53/月/人起，2.96元/100积分", bonusPerSeat: 2000,
     activities: [{ n: "Seedance 2.0", t: null }, { n: "kling 3.0", t: null }, { n: "kling O3", t: null }],
     teamPerks: ["团队共享积分", "自定义席位积分配额", "资产共享/团队项目空间", "协同创作/席位管理", "画布访问权限", "数据安全，资产隔离"],
     commonPerks: ["登录每日赠送20积分/席位", "无限并发任务/席位", "云端存储空间500GB/席位", "会员专享无限次加速"],
     perksText: "每席位每月获得10000积分\n团队内每月共30000会员积分\n约生成30000张图片或1500个标准视频", total: 1677 },
-  { name: "大师版", icon: "💜", dot: "var(--color-brand-600)", price: 524, orig: 699, unit: "53/月/人起",
+  { name: "大师版", icon: "💜", dot: "var(--color-brand-600)", price: 524, orig: 699, unit: "53/月/人起", bonusPerSeat: 2400,
     activities: [{ n: "Seedance 2.0", t: "免费送60条/席位" }, { n: "kling 3.0", t: "免费送60条/席位" }, { n: "kling O3", t: null }],
     teamPerks: ["团队共享积分", "自定义席位积分配额", "资产共享/团队项目空间", "协同创作/席位管理", "画布访问权限", "数据安全，资产隔离"],
     commonPerks: ["登录每日赠送20积分/席位", "无限并发任务/席位", "云端存储空间500GB/席位", "会员专享无限次加速"],
     perksText: "每席位每月获得10000积分\n团队内每月共30000会员积分\n约生成30000张图片或1500个标准视频", total: 9438, discTag: "比充值便宜70%" },
-  { name: "旗舰版", icon: "🔥", dot: "#e08020", price: 454, orig: 699, badge: "旗舰", unit: "53/月/人起，2.96元/100积分",
+  { name: "旗舰版", icon: "🔥", dot: "#e08020", price: 454, orig: 699, badge: "旗舰", unit: "53/月/人起，2.96元/100积分", bonusPerSeat: 3000,
     activities: [{ n: "Seedance 2.0", t: "免费送60条/席位" }, { n: "kling 3.0", t: "免费送60条/席位" }, { n: "kling O3", t: "免费送60条/席位" }],
     teamPerks: ["团队共享积分", "自定义席位积分配额", "资产共享/团队项目空间", "协同创作/席位管理", "画布访问权限", "数据安全，资产隔离"],
     commonPerks: ["登录每日赠送20积分/席位", "无限并发任务/席位", "云端存储空间500GB/席位", "会员专享无限次加速"],
     perksText: "每席位每月获得10000积分\n团队内每月共30000会员积分\n约生成30000张图片或1500个标准视频", total: 16350, discTag: "比充值便宜70%" },
-  { name: "尊享版", icon: "💚", dot: "var(--color-brand-300)", price: 454, orig: 699, badge: "年SD2+Kling共送180条", sel: true, unit: "53/月/人起，2.96元/100积分",
+  { name: "尊享版", icon: "💚", dot: "var(--color-brand-300)", price: 454, orig: 699, badge: "年SD2+Kling共送180条", sel: true, unit: "53/月/人起，2.96元/100积分", bonusPerSeat: 3600,
     activities: [{ n: "Seedance 2.0", t: "免费送60条/席位", hot: true }, { n: "kling 3.0", t: "免费送60条/席位" }, { n: "kling O3", t: "免费送60条/席位" }],
     teamPerks: ["团队共享积分", "自定义席位积分配额", "资产共享/团队项目空间", "协同创作/席位管理", "画布访问权限", "数据安全，资产隔离"],
     commonPerks: ["登录每日赠送20积分/席位", "无限并发任务/席位", "云端存储空间500GB/席位", "会员专享无限次加速"],
     perksText: "每席位每月获得10000积分\n团队内每月共30000会员积分\n约生成30000张图片或1500个标准视频", total: 16350, discTag: "比充值便宜70%" },
 ];
 
-const FAQ_ITEMS = [
-  "Q1 团队账户和个人账户有什么关系？", "Q2 我可以分别创建和加入多少个团队空间？", "Q3 我可以邀请多少人加入团队？",
-  "Q4 团队空间中有哪些角色和权限？", "Q5 团队空间中资产如何管理？", "Q6 团队版到期后数据会怎么样？",
-  "Q7 如何从个人版迁移到团队版？", "Q8 团队版支持哪些支付方式？", "Q9 席位可以中途增减吗？", "Q10 团队成员可以同时在线协作吗？",
-];
+/** 团队免费版：与付费档位并列展示时的权益说明（原型数据） */
+const FREE_TEAM_TIER = {
+  name: "团队免费版",
+  icon: "🌿",
+  dot: "#71717a",
+  inviteMax: 3,
+  included: ["基础 AI 创作与协作功能"],
+  excluded: [
+    "自定义席位积分分配",
+    "资产共享 / 席位管理",
+    "协同创作 / 席位管理",
+    "画布访问权限",
+    "数据安全，资产隔离",
+  ],
+};
 
 const MembershipModal = memo(function MembershipModal({ opened, onClose, onBuy }) {
   const [mainTab, setMainTab] = useState("team");
   const [subTab, setSubTab] = useState("year");
   const [seats, setSeats] = useState([3, 3, 3, 3]);
-  const [expandedFaq, setExpandedFaq] = useState(null);
+  const [marketingTipIdx, setMarketingTipIdx] = useState(null);
 
   const updateSeat = (idx, v) => { const n = [...seats]; n[idx] = v; setSeats(n); };
 
   return (
-    <ModalShell opened={opened} onClose={onClose} width={1060} noPad maxHeight="95vh">
-      {/* 顶部倒计时横幅 */}
-      <div style={{ background: "linear-gradient(90deg, #1a1400, #0a1a18)", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontSize: 12, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <div style={{ display: "flex", gap: 3, alignItems: "center", fontFamily: "Inter, sans-serif", fontWeight: 700, color: "var(--fg-brand)" }}>
+    <ModalShell opened={opened} onClose={onClose} width={1260} noPad maxHeight="calc(100vh - 20px)" contentStyle={{ overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0, flex: 1, padding: 0 }}>
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden", background: "#0b0c0e" }}>
+      {/* 顶部横幅（图2：偏蓝深色条） */}
+      <div style={{ flexShrink: 0, background: "linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)", padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontSize: 11, borderBottom: "1px solid #1e293b" }}>
+        <div style={{ display: "flex", gap: 3, alignItems: "center", fontFamily: "Inter, sans-serif", fontWeight: 700, color: "#93c5fd" }}>
           {["01", "天", "02", "时", "16", "分", "54", "秒"].map((v, i) => i % 2 === 0 ?
-            <span key={i} style={{ background: "#21212f", padding: "2px 5px", borderRadius: 3, fontSize: 11, minWidth: 22, textAlign: "center" }}>{v}</span> :
-            <span key={i} style={{ fontSize: 10, color: "var(--fg-muted)" }}>{v}</span>
+            <span key={i} style={{ background: "#1e293b", padding: "2px 5px", borderRadius: 4, fontSize: 10, minWidth: 20, textAlign: "center", color: "#e2e8f0" }}>{v}</span> :
+            <span key={i} style={{ fontSize: 10, color: "#64748b" }}>{v}</span>
           )}
         </div>
-        <span style={{ color: "#e8b830" }}>🎉 顶配福利：尊享年限时狂送 60 条 SD2.0，价值1200元</span>
+        <span style={{ color: "#fcd34d", fontWeight: 500 }}>顶配福利：尊享年限时加送 SD2.0 / Kling 权益</span>
       </div>
-      {/* Tab: 创作会员 | 团队版会员 */}
-      <div style={{ textAlign: "center", padding: "16px 28px 0", position: "sticky", top: 0, background: "#0f0f17", zIndex: 5 }}>
-        <div style={{ display: "flex", justifyContent: "center", gap: 0, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      {/* Tab */}
+      <div style={{ flexShrink: 0, textAlign: "center", padding: "10px 20px 0", background: "#0b0c0e" }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: 0, borderBottom: "1px solid #252830" }}>
           {[{ k: "create", l: "创作会员" }, { k: "team", l: "团队版会员", badge: true }].map(t => (
-            <button key={t.k} onClick={() => setMainTab(t.k)} style={{ padding: "10px 24px 12px", fontSize: 14, fontWeight: mainTab === t.k ? 700 : 500, color: mainTab === t.k ? "var(--fg-default)" : "var(--fg-subtle)", cursor: "pointer", background: "transparent", border: "none", borderBottom: mainTab === t.k ? "2px solid var(--color-brand-300)" : "2px solid transparent", transition: "all 0.15s" }}>
-              {t.l}{t.badge && <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: 3, background: "var(--color-brand-300)", color: "var(--bg-page)", fontSize: 9, fontWeight: 700, marginLeft: 6, verticalAlign: "middle" }}>团队协作升级</span>}
+            <button key={t.k} onClick={() => setMainTab(t.k)} style={{ padding: "8px 20px 10px", fontSize: 13, fontWeight: mainTab === t.k ? 700 : 500, color: mainTab === t.k ? "#f8fafc" : "#64748b", cursor: "pointer", background: "transparent", border: "none", borderBottom: mainTab === t.k ? "2px solid #3b82f6" : "2px solid transparent", transition: "all 0.15s" }}>
+              {t.l}{t.badge && <span style={{ display: "inline-block", padding: "2px 7px", borderRadius: 4, background: "#1d4ed8", color: "#eff6ff", fontSize: 9, fontWeight: 700, marginLeft: 6, verticalAlign: "middle" }}>团队协作升级</span>}
             </button>
           ))}
         </div>
       </div>
-      {/* Sub Tab: 按年/按月 */}
-      <div style={{ display: "flex", justifyContent: "center", gap: 10, padding: "14px 28px 14px" }}>
-        {[{ k: "year", l: "按年购买", d: "26折", c: "#e04040" }, { k: "month", l: "按月购买", d: "44折", c: "#e08020" }].map(s => (
-          <button key={s.k} onClick={() => setSubTab(s.k)} style={{ padding: "7px 18px", borderRadius: 20, fontSize: 12, fontWeight: 600, border: subTab === s.k ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.08)", background: subTab === s.k ? "var(--bg-surface-elevated)" : "transparent", color: subTab === s.k ? "var(--fg-default)" : "var(--fg-muted)", cursor: "pointer" }}>
-            {s.l} <span style={{ display: "inline-block", padding: "1px 6px", borderRadius: 3, background: s.c, color: "var(--fg-on-emphasis)", fontSize: 9, fontWeight: 700, marginLeft: 4 }}>{s.d}</span>
+      {/* 按年/按月 */}
+      <div style={{ flexShrink: 0, display: "flex", justifyContent: "center", gap: 8, padding: "10px 20px 10px", background: "#0b0c0e" }}>
+        {[{ k: "year", l: "按年购买", d: "2.6折", c: "#dc2626" }, { k: "month", l: "按月购买", d: "4.4折", c: "#ea580c" }].map(s => (
+          <button key={s.k} onClick={() => setSubTab(s.k)} style={{ padding: "6px 16px", borderRadius: 999, fontSize: 11, fontWeight: 600, border: subTab === s.k ? "1px solid #334155" : "1px solid #252830", background: subTab === s.k ? "#1c1e22" : "transparent", color: subTab === s.k ? "#f1f5f9" : "#64748b", cursor: "pointer" }}>
+            {s.l} <span style={{ display: "inline-block", padding: "1px 5px", borderRadius: 3, background: s.c, color: "#fff", fontSize: 8, fontWeight: 700, marginLeft: 4 }}>{s.d}</span>
           </button>
         ))}
       </div>
-      {/* 4列套餐卡片 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, padding: "0 24px 20px" }}>
-        {TIERS.map((t, i) => (
-          <div key={i} style={{ padding: "20px 16px", borderRadius: 12, border: t.sel ? "1.5px solid rgba(0,212,200,0.25)" : "1.5px solid rgba(255,255,255,0.06)", background: t.sel ? "rgba(0,212,200,0.02)" : "#14141e", position: "relative" }}>
-            {t.badge && <div style={{ position: "absolute", top: -8, right: 10, padding: "2px 8px", borderRadius: 3, fontSize: 9, fontWeight: 700, background: t.sel ? "linear-gradient(90deg, #e08020, #e04040)" : "#e08020", color: "var(--fg-on-emphasis)" }}>{t.badge}</div>}
-            {/* 套餐名 */}
-            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, display: "flex", alignItems: "center", gap: 6, color: "var(--fg-default)" }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: t.dot }} />{t.icon} {t.name}
+      {/* 四列套餐：固定视口内高度，权益在卡片内滚动 */}
+      <div style={{ flex: 1, minHeight: 0, overflow: "hidden", padding: "0 14px 10px", display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 10, flex: 1, minHeight: 0, alignContent: "stretch" }}>
+        {TIERS.map((t, i) => {
+          const bonus = t.bonusPerSeat ?? 2000;
+          const bonusTotal = bonus * seats[i];
+          const lineTotal = t.price * seats[i];
+          return (
+          <div key={i} style={{
+            padding: "10px 10px 8px", borderRadius: 10, position: "relative", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden",
+            border: t.sel ? "1px solid #c9a227" : "1px solid #2a2d33",
+            background: "#1c1e22",
+            boxShadow: t.sel ? "0 0 0 1px rgba(201,162,39,0.15), inset 0 1px 0 rgba(255,255,255,0.04)" : "none",
+          }}>
+            {t.badge && <div style={{ position: "absolute", top: 6, right: 6, padding: "2px 6px", borderRadius: 4, fontSize: 8, fontWeight: 700, background: "linear-gradient(90deg, #b45309, #c2410c)", color: "#fff" }}>{t.badge}</div>}
+            <div style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", gap: 5, color: "#f8fafc", paddingRight: t.badge ? 56 : 0 }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: t.dot, flexShrink: 0 }} />{t.icon} {t.name}
             </div>
-            {/* 价格 */}
-            <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
-              <span style={{ fontSize: 32, fontWeight: 800, fontFamily: "Inter, sans-serif", letterSpacing: -1, color: t.sel ? "var(--fg-default)" : "var(--fg-default)" }}>{t.price}</span>
-              <span style={{ fontSize: 11, color: "var(--fg-subtle)" }}>¥{t.orig}</span>
+            <div style={{ flexShrink: 0, display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: "2px 6px", marginBottom: 2 }}>
+              <span style={{ fontSize: 26, fontWeight: 800, fontFamily: "Inter, sans-serif", letterSpacing: -1, color: "#fff" }}>{t.price}</span>
+              <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>元/席位/月</span>
+              <s style={{ fontSize: 10, color: "#475569", fontWeight: 500 }}>¥{t.orig}</s>
             </div>
-            <div style={{ fontSize: 10, color: "var(--fg-subtle)", marginBottom: 14 }}>{t.unit}</div>
-            {/* 席位选择 + 合计 */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-              <SeatSelector value={seats[i]} onChange={(v) => updateSeat(i, v)} />
-              <span style={{ fontSize: 14, fontWeight: 800, fontFamily: "Inter, sans-serif", color: "var(--fg-default)", marginLeft: "auto" }}>合计：<span style={{ fontSize: 16 }}>{t.price * seats[i]}</span>元</span>
+            <div style={{ flexShrink: 0, fontSize: 9, color: "#64748b", marginBottom: mainTab === "team" ? 8 : 8, lineHeight: 1.35 }}>{t.unit}</div>
+            {mainTab === "team" && (
+              <div style={{ flexShrink: 0, borderRadius: 8, background: "#252a33", border: "1px solid #334155", padding: "8px 9px", marginBottom: 8 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginBottom: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: "#93c5fd", lineHeight: 1.35 }}>
+                        首单加赠 {bonus.toLocaleString("zh-CN")} 积分/席位
+                      </span>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onMouseEnter={() => setMarketingTipIdx(i)}
+                        onMouseLeave={() => setMarketingTipIdx(null)}
+                        onFocus={() => setMarketingTipIdx(i)}
+                        onBlur={() => setMarketingTipIdx(null)}
+                        style={{ position: "relative", display: "inline-flex", width: 15, height: 15, borderRadius: "50%", border: "1px solid rgba(161,161,170,0.35)", color: "#a1a1aa", fontSize: 9, fontWeight: 700, alignItems: "center", justifyContent: "center", cursor: "help", flexShrink: 0, lineHeight: 1 }}
+                      >i
+                        {marketingTipIdx === i && (
+                          <span style={{
+                            position: "absolute", left: "50%", bottom: "calc(100% + 8px)", transform: "translateX(-50%)",
+                            width: 220, padding: "10px 11px", borderRadius: 8, zIndex: 50,
+                            background: "rgba(30,30,38,0.98)", border: "1px solid rgba(255,255,255,0.12)",
+                            boxShadow: "0 12px 28px rgba(0,0,0,0.5)", fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.9)",
+                            lineHeight: 1.5, textAlign: "left", pointerEvents: "none",
+                          }}>
+                            首单加赠积分在支付成功后发放至团队账户；仅限首次开通团队版的订单，细则以活动规则为准。
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 10, color: "#94a3b8", lineHeight: 1.35 }}>
+                      已选 <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{seats[i]}</span> 席位，共可获赠 <span style={{ color: "#fcd34d", fontWeight: 700 }}>{bonusTotal.toLocaleString("zh-CN")}</span> 积分
+                    </div>
+                </div>
+              </div>
+            )}
+            <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 8 }}>
+              <SeatSelector value={seats[i]} onChange={(v) => updateSeat(i, v)} seatWord={mainTab === "team"} tall={false} />
+              <span style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", whiteSpace: "nowrap" }}>合计 <span style={{ fontSize: 14, fontWeight: 800, color: "#fff", fontFamily: "Inter, sans-serif" }}>{lineTotal.toLocaleString("zh-CN")}</span> 元</span>
             </div>
-            {/* 购买按钮 */}
-            <button onClick={() => onBuy(t.name)} style={{ width: "100%", padding: 10, borderRadius: 5, background: "#21212f", border: "1px solid rgba(255,255,255,0.1)", color: "var(--fg-default)", fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 16, transition: "all 0.15s" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--color-brand-400) 8%, transparent)"; e.currentTarget.style.color = "var(--color-brand-300)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--color-brand-400) 22%, transparent)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "#21212f"; e.currentTarget.style.color = "var(--fg-default)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}>购买</button>
-            {/* 积分信息 */}
-            <div style={{ fontSize: 10, color: "var(--fg-default)", fontWeight: 600, marginBottom: 2 }}>⚡ 每席位每月获得10000积分</div>
-            {t.discTag && <span style={{ display: "inline-block", padding: "1px 6px", borderRadius: 3, background: "rgba(0,212,200,0.08)", color: "var(--fg-brand)", fontSize: 9, fontWeight: 600, marginBottom: 4 }}>{t.discTag}</span>}
-            <div style={{ fontSize: 9, color: "var(--fg-subtle)", lineHeight: 1.6, marginBottom: 12 }}>{t.perksText.replace(/\\n/g, "\n").split("\n").slice(1).join("\n")}</div>
-            {/* 限时活动 */}
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-default)", marginBottom: 6 }}>限时活动</div>
+            <button type="button" onClick={() => onBuy(t.name)} style={{
+              flexShrink: 0, width: "100%", padding: "9px 10px", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", marginBottom: 6, transition: "filter 0.15s",
+              background: mainTab === "team" ? "linear-gradient(180deg, #eef4ff 0%, #d6e4ff 100%)" : "#2d3340",
+              border: mainTab === "team" ? "1px solid #bfdbfe" : "1px solid #3f4654",
+              color: mainTab === "team" ? "#0f172a" : "#e2e8f0",
+              boxShadow: mainTab === "team" ? "0 2px 8px rgba(15,23,42,0.25)" : "none",
+            }}
+              onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.04)"; }}
+              onMouseLeave={e => { e.currentTarget.style.filter = "none"; }}
+            >{mainTab === "team" ? "购买并创建团队" : "购买"}</button>
+            <div style={{ flex: 1, minHeight: 0, overflowY: "auto", marginTop: 2, paddingRight: 2, WebkitOverflowScrolling: "touch" }}>
+            <div style={{ fontSize: 9, color: "#e2e8f0", fontWeight: 600, marginBottom: 3, padding: "6px 7px", borderRadius: 6, background: "#252a33", border: "1px solid #334155" }}>
+              <div style={{ marginBottom: 3 }}>每席位每月获得 <span style={{ color: "#fff" }}>10,000</span> 积分</div>
+              {t.discTag && <span style={{ display: "inline-block", padding: "1px 5px", borderRadius: 3, background: "rgba(234,179,8,0.15)", color: "#fcd34d", fontSize: 8, fontWeight: 600 }}>{t.discTag}</span>}
+              <div style={{ fontSize: 8, color: "#64748b", lineHeight: 1.45, marginTop: 4 }}>{t.perksText.replace(/\\n/g, "\n").split("\n").slice(1).join(" ")}</div>
+            </div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "#f1f5f9", marginTop: 8, marginBottom: 4 }}>限时活动</div>
             {t.activities.map((a, ai) => (
-              <div key={ai} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "3px 0", fontSize: 10 }}>
-                <span style={{ color: "var(--fg-muted)" }}>{a.n}</span>
-                {a.t && <span style={{ padding: "1px 6px", borderRadius: 3, background: a.hot ? "#e04040" : "#e08020", color: "var(--fg-on-emphasis)", fontSize: 8, fontWeight: 700 }}>{a.t}</span>}
+              <div key={ai} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "2px 0", fontSize: 9 }}>
+                <span style={{ color: "#94a3b8" }}>{a.n}</span>
+                {a.t && <span style={{ padding: "1px 5px", borderRadius: 3, background: a.hot ? "#dc2626" : "#ea580c", color: "#fff", fontSize: 7, fontWeight: 700 }}>{a.t}</span>}
               </div>
             ))}
-            {/* 团队专属权益 */}
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-default)", marginTop: 12, marginBottom: 6 }}>团队专属权益</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "#f1f5f9", marginTop: 8, marginBottom: 4 }}>团队专属权益</div>
             {t.teamPerks.map((p, pi) => (
-              <div key={pi} style={{ fontSize: 10, color: "var(--fg-muted)", padding: "2px 0", display: "flex", alignItems: "center", gap: 5 }}>
-                <span style={{ color: "var(--fg-subtle)" }}>+</span>{p} <span style={{ color: "#3a3a50", fontSize: 8 }}>◎</span>
+              <div key={pi} style={{ fontSize: 9, color: "#94a3b8", padding: "1px 0", display: "flex", alignItems: "flex-start", gap: 4, lineHeight: 1.35 }}>
+                <span style={{ color: "#64748b", flexShrink: 0 }}>+</span><span>{p}</span>
               </div>
             ))}
-            {/* 通用权益 */}
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-default)", marginTop: 12, marginBottom: 6 }}>通用权益</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "#f1f5f9", marginTop: 8, marginBottom: 4 }}>通用权益</div>
             {t.commonPerks.map((p, pi) => (
-              <div key={pi} style={{ fontSize: 10, color: "var(--fg-muted)", padding: "2px 0", display: "flex", alignItems: "center", gap: 5 }}>
-                <span style={{ color: "var(--fg-subtle)" }}>+</span>{p} <span style={{ color: "#3a3a50", fontSize: 8 }}>◎</span>
+              <div key={pi} style={{ fontSize: 9, color: "#94a3b8", padding: "1px 0", display: "flex", alignItems: "flex-start", gap: 4, lineHeight: 1.35 }}>
+                <span style={{ color: "#64748b", flexShrink: 0 }}>+</span><span>{p}</span>
               </div>
             ))}
+            </div>
           </div>
-        ))}
+          );
+        })}
       </div>
-      {/* 企业版横条 */}
-      <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 18px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.01)" }}>
-          <span style={{ fontSize: 18 }}>🏢</span>
-          <div style={{ flex: 1 }}>
-            <b style={{ fontSize: 14, color: "var(--fg-default)" }}>企业版</b>
-            <div style={{ fontSize: 11, color: "var(--fg-subtle)", marginTop: 2 }}>若当前会员方案未能满足您的需求，请联系我们获取 更多席位/更积分 | 企业集中采购、对公支付等 | 数据安全合规</div>
+      </div>
+      {/* 企业版（图2 底部横条，紧凑） */}
+      <div style={{ flexShrink: 0, padding: "8px 14px 12px", borderTop: "1px solid #252830", background: "#0b0c0e" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 8, border: "1px solid #2a2d33", background: "#14161a" }}>
+          <span style={{ fontSize: 16 }}>🏢</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <b style={{ fontSize: 12, color: "#f1f5f9" }}>企业版</b>
+            <div style={{ fontSize: 10, color: "#64748b", marginTop: 2, lineHeight: 1.35 }}>更多席位与积分 · 集中采购与对公支付 · 安全合规支持</div>
           </div>
-          <button style={{ padding: "8px 18px", borderRadius: 20, fontSize: 12, fontWeight: 500, border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "var(--fg-default)", cursor: "pointer" }}>联系我们</button>
+          <button type="button" style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 999, fontSize: 11, fontWeight: 600, border: "1px solid #334155", background: "#1c1e22", color: "#e2e8f0", cursor: "pointer" }}>联系我们</button>
         </div>
       </div>
-      {/* FAQ */}
-      <div style={{ padding: "20px 24px 30px", background: "rgba(255,255,255,0.01)" }}>
-        <h4 style={{ fontSize: 16, fontWeight: 700, textAlign: "center", marginBottom: 16, color: "var(--fg-default)" }}>团队会员常见问题</h4>
-        {FAQ_ITEMS.map((q, i) => (
-          <div key={i} onClick={() => setExpandedFaq(expandedFaq === i ? null : i)} style={{ padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", fontSize: 13, color: "var(--fg-muted)", cursor: "pointer" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span>{q}</span><span style={{ color: "#3a3a50", fontSize: 16, transition: "transform 0.2s", display: "inline-block", transform: expandedFaq === i ? "rotate(180deg)" : "none" }}>⌄</span>
-            </div>
-            {expandedFaq === i && <div style={{ marginTop: 8, fontSize: 11, color: "var(--fg-subtle)", lineHeight: 1.8, paddingLeft: 4 }}>此功能正在完善中，具体细则请参阅团队版服务协议或联系客服获取详情。</div>}
-          </div>
-        ))}
       </div>
     </ModalShell>
   );
@@ -4977,40 +5036,158 @@ const MembershipModal = memo(function MembershipModal({ opened, onClose, onBuy }
 // ============================================================
 // S3: CheckoutModal — 开通结算页
 // ============================================================
+/** monthCoef：折扣系数，与档位一致（8折=0.8）；单席位价 = round(年刊例×年数×折扣系数)，应付=单席位价×席数 */
 const DURATIONS = [
-  { months: 12, price: 559, orig: 699, disc: "8折", perMonth: 50 },
-  { months: 24, price: 2524, orig: 3600, disc: "75折", perMonth: 30 },
-  { months: 36, price: 1454, orig: 2400, disc: "65折", perMonth: 40 },
+  { months: 12, orig: 699, disc: "8折", monthCoef: 0.8, perMonth: 50 },
+  { months: 24, orig: 3600, disc: "75折", monthCoef: 0.75, perMonth: 30 },
+  { months: 36, orig: 2400, disc: "65折", monthCoef: 0.65, perMonth: 40 },
 ];
+
+function checkoutDurationDerived(d, seatCount) {
+  const years = d.months / 12;
+  const annualListPerSeat = Math.round((d.orig * 12) / d.months);
+  const origLineTotal = annualListPerSeat * seatCount * years;
+  const pricePerSeat = Math.round(annualListPerSeat * years * d.monthCoef);
+  const total = pricePerSeat * seatCount;
+  return { years, annualListPerSeat, origLineTotal, pricePerSeat, total };
+}
+
+/** 支付页底部倒计时：有效支付时间（秒） */
+const CHECKOUT_PAY_COUNTDOWN_SEC = 15 * 60;
 
 const CheckoutModal = memo(function CheckoutModal({ opened, onClose, tierName, onPaySuccess }) {
   const [selDur, setSelDur] = useState(0);
   const [seats, setSeats] = useState(2);
+  const [payRemainSec, setPayRemainSec] = useState(CHECKOUT_PAY_COUNTDOWN_SEC);
   const d = DURATIONS[selDur];
-  const total = d.price * seats;
+  const { years, annualListPerSeat, origLineTotal, pricePerSeat, total } = checkoutDurationDerived(d, seats);
+  const checkoutBonusPerSeat = 2000;
+  const checkoutBonusTotal = checkoutBonusPerSeat * seats;
+  const monthCoef = d.monthCoef;
+  const yearsLabel = Number.isInteger(years) ? `${years}年` : `${d.months}个月`;
+  const savedTotal = origLineTotal - total;
+  const coefStr = String(monthCoef);
+  const validUntilStr = (() => {
+    const end = new Date();
+    end.setMonth(end.getMonth() + d.months);
+    const y = end.getFullYear();
+    const mo = String(end.getMonth() + 1).padStart(2, "0");
+    const day = String(end.getDate()).padStart(2, "0");
+    return `${y}-${mo}-${day}`;
+  })();
+
+  useEffect(() => {
+    if (!opened) return;
+    setPayRemainSec(CHECKOUT_PAY_COUNTDOWN_SEC);
+  }, [opened]);
+
+  useEffect(() => {
+    if (!opened) return;
+    const id = setInterval(() => {
+      setPayRemainSec((s) => (s <= 0 ? 0 : s - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [opened]);
+
+  const payExpired = payRemainSec <= 0;
+  const payMm = String(Math.floor(payRemainSec / 60)).padStart(2, "0");
+  const paySs = String(payRemainSec % 60).padStart(2, "0");
 
   return (
-    <ModalShell opened={opened} onClose={onClose} width={580}>
-      <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--fg-default)", marginBottom: 4 }}>开通团队「{tierName || "尊享版"}」</h2>
-      <div style={{ fontSize: 11, color: "var(--fg-subtle)", marginBottom: 20 }}>开通即代表同意相关协议</div>
-      <div style={{ width: "100%", padding: 16, borderRadius: 8, border: "1px solid color-mix(in srgb, var(--color-brand-400) 22%, transparent)", background: "rgba(0,212,200,0.03)", textAlign: "center", color: "var(--fg-subtle)", fontSize: 12, marginBottom: 20 }}>🎉 营销位 — 限时优惠进行中</div>
-      <div style={{ fontSize: 11, color: "var(--fg-muted)", marginBottom: 8, fontWeight: 500 }}>选择商品</div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-        {DURATIONS.map((dur, i) => (
-          <div key={i} onClick={() => setSelDur(i)} style={{ flex: 1, padding: "16px 14px", borderRadius: 8, border: selDur === i ? "1.5px solid color-mix(in srgb, var(--color-brand-400) 22%, transparent)" : "1.5px solid rgba(255,255,255,0.08)", background: selDur === i ? "rgba(0,212,200,0.03)" : "#14141e", cursor: "pointer", position: "relative", transition: "all 0.2s" }}>
-            <div style={{ position: "absolute", top: -7, right: 8, padding: "1px 6px", borderRadius: 3, background: selDur === i ? "var(--color-brand-300)" : "var(--bg-surface-elevated)", color: selDur === i ? "var(--bg-page)" : "var(--fg-muted)", fontSize: 9, fontWeight: 600 }}>{dur.disc}</div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg-default)", marginBottom: 6 }}>{dur.months}个月</div>
-            <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "Inter, sans-serif", color: "var(--fg-default)" }}>{dur.price}<sub style={{ fontSize: 10, fontWeight: 400, color: "var(--fg-muted)" }}>元/席位/月</sub> <s style={{ fontSize: 10, color: "#3a3a50", fontWeight: 400 }}>¥{dur.orig}</s></div>
-            <div style={{ fontSize: 9, color: "var(--fg-subtle)", marginTop: 2 }}>每席位：{dur.perMonth}元/月</div>
+    <ModalShell opened={opened} onClose={onClose} width={980} noPad contentStyle={{ padding: 0, overflow: "hidden" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 220px", minHeight: 500, background: "#232323" }}>
+        <div style={{ minWidth: 0, padding: "18px 32px 20px", display: "flex", flexDirection: "column" }}>
+          <div style={{ textAlign: "center", marginBottom: 18 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "#f5f5f5", marginBottom: 0 }}>开通团队版会员「{tierName || "尊享版"}」</h2>
           </div>
-        ))}
+
+          <div style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "#2a2731", marginBottom: 18 }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: "linear-gradient(135deg, #fbbf24, #22c55e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🎁</div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#4ade80", marginBottom: 4 }}>首单加赠 {checkoutBonusPerSeat.toLocaleString("zh-CN")} 积分/席位</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>已选 <span style={{ color: "#e4e4e7", fontWeight: 600 }}>{seats}</span> 席位，共可获赠 <span style={{ color: "#4ade80", fontWeight: 700 }}>{checkoutBonusTotal.toLocaleString("zh-CN")}</span> 积分</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ fontSize: 12, color: "#d4d4d8", marginBottom: 10, fontWeight: 600 }}>选择商品</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 20 }}>
+            {DURATIONS.map((dur, i) => {
+              const { pricePerSeat: cardSeatPrice } = checkoutDurationDerived(dur, 1);
+              return (
+                <div key={i} onClick={() => setSelDur(i)} style={{ padding: "14px 14px 12px", borderRadius: 12, border: selDur === i ? "1.5px solid #22d3ee" : "1px solid rgba(255,255,255,0.06)", boxShadow: selDur === i ? "inset 0 0 0 1px rgba(34,211,238,0.18)" : "none", background: "#2b2b2b", cursor: "pointer", position: "relative", transition: "all 0.2s" }}>
+                  <div style={{ position: "absolute", top: 12, right: 12, padding: "2px 8px", borderRadius: 7, background: selDur === i ? "#f97316" : "rgba(255,255,255,0.08)", color: selDur === i ? "#fff7ed" : "#d4d4d8", fontSize: 10, fontWeight: 700, lineHeight: 1.2 }}>{dur.disc}</div>
+                  <div style={{ fontSize: 12, color: "#e5e7eb", marginBottom: 14 }}>{dur.months}个月</div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 18, fontWeight: 800, fontFamily: "Inter, sans-serif", color: "#f8fafc" }}>¥{cardSeatPrice}</span>
+                    <span style={{ fontSize: 10, color: "#cbd5e1" }}>/席位/{yearsLabel}</span>
+                    <s style={{ fontSize: 10, color: "#6b7280" }}>¥{dur.orig}</s>
+                  </div>
+                  <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 8 }}>低至 {dur.perMonth}元/席位/月</div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ borderTop: "1px dashed rgba(255,255,255,0.12)", paddingTop: 18 }}>
+            <div style={{ fontSize: 12, color: "#d4d4d8", marginBottom: 10, fontWeight: 600 }}>席位数量（支持2–200人）</div>
+            <div style={{ marginBottom: 14 }}>
+              <SeatSelector value={seats} onChange={setSeats} seatWord tall />
+            </div>
+          </div>
+
+          <div style={{ marginTop: 8, paddingTop: 14, borderTop: "1px solid #2b3037" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20 }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#f3f4f6", lineHeight: 1.45 }}>团队等级：{tierName || "尊享版"}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#f3f4f6", lineHeight: 1.45, marginTop: 8 }}>订单明细：¥{pricePerSeat.toLocaleString("zh-CN")} × {seats}席位</div>
+              </div>
+              <div style={{ textAlign: "right", flexShrink: 0, paddingTop: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#f5f7fa", fontFamily: "Inter, sans-serif", lineHeight: 1.4 }}>¥{total.toLocaleString("zh-CN")}</div>
+                <div style={{ fontSize: 10, fontWeight: 400, color: "#7b8390", textDecoration: "line-through", fontFamily: "Inter, sans-serif", lineHeight: 1.5, marginTop: 8 }}>¥{origLineTotal.toLocaleString("zh-CN")}</div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, marginTop: 18 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#f3f4f6", lineHeight: 1.45 }}>有效期至</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#f3f4f6", fontFamily: "Inter, sans-serif", lineHeight: 1.4, textAlign: "right" }}>{validUntilStr}</span>
+            </div>
+
+            <div style={{ fontSize: 10, fontWeight: 400, color: "#7b8390", marginTop: 12, lineHeight: 1.5 }}>付款成功后，可在订单页申请开具发票</div>
+          </div>
+
+          <div style={{ marginTop: "auto", paddingTop: 14 }}>
+            <button type="button" disabled={payExpired} onClick={onPaySuccess} style={{ width: "100%", padding: "13px 16px", borderRadius: 10, background: payExpired ? "#3f3f46" : "#f4f4f5", border: "none", color: payExpired ? "#a1a1aa" : "#18181b", fontSize: 14, fontWeight: 700, cursor: payExpired ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "filter 0.15s", boxShadow: payExpired ? "none" : "0 4px 16px rgba(0,0,0,0.25)", opacity: payExpired ? 0.85 : 1 }}
+              onMouseEnter={e => { if (!payExpired) e.currentTarget.style.filter = "brightness(1.05)"; }}
+              onMouseLeave={e => { e.currentTarget.style.filter = "none"; }}
+            >{payExpired ? "支付已超时" : "模拟支付成功 →"}</button>
+          </div>
+        </div>
+
+        <div style={{ borderLeft: "1px solid #2f2f2f", background: "#2c2c2c", padding: "28px 20px 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{ width: "100%", flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 18 }}>
+            <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#60a5fa", fontFamily: "Inter, sans-serif" }}>¥{total.toLocaleString("zh-CN")}</div>
+              <div style={{ fontSize: 10, color: "#7b8390", marginTop: 4 }}>有效期至 {validUntilStr}</div>
+            </div>
+            <QRPayBlock compact qrBoxSize={128} containerStyle={{ width: "100%", display: "flex", justifyContent: "center" }} />
+            <div style={{
+              width: "100%",
+              padding: "10px 12px",
+              borderRadius: 10,
+              textAlign: "center",
+              background: payExpired ? "rgba(127,29,29,0.22)" : "rgba(15,23,42,0.45)",
+              border: `1px solid ${payExpired ? "rgba(248,113,113,0.38)" : "#334155"}`,
+            }}>
+              <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 4 }}>支付剩余时间</div>
+              <div style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontWeight: 800, fontSize: 20, letterSpacing: 2, color: payExpired ? "#f87171" : "#38bdf8" }}>{payMm}:{paySs}</div>
+              {payExpired && <div style={{ fontSize: 9, color: "#fca5a5", marginTop: 6, lineHeight: 1.45 }}>订单已超时，请重新发起购买</div>}
+            </div>
+          </div>
+          <div style={{ fontSize: 9, color: "#6b7280", textAlign: "center", marginTop: 8 }}>仅限电脑端使用，手机端不可用</div>
+        </div>
       </div>
-      <div style={{ fontSize: 11, color: "var(--fg-muted)", marginBottom: 8, fontWeight: 500 }}>席位数量（支持2–200人）</div>
-      <div style={{ marginBottom: 24 }}>
-        <SeatSelector value={seats} onChange={setSeats} />
-      </div>
-      <QRPayBlock total={total} originalTotal={d.orig * seats} />
-      <button onClick={onPaySuccess} style={{ width: "100%", padding: 14, borderRadius: 5, background: "#21212f", border: "1px solid color-mix(in srgb, var(--color-brand-400) 22%, transparent)", color: "var(--fg-brand)", fontSize: 14, fontWeight: 700, cursor: "pointer", marginTop: 18, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.15s" }}>模拟支付成功 →</button>
     </ModalShell>
   );
 });
